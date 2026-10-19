@@ -12,7 +12,7 @@ export default function Console() {
     <div className="flex min-h-full flex-col">
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-line px-5 py-4">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-accent">DoorCheck · Ring doorbell package check</div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-accent">DeliveryHub · Ring doorbell package check</div>
           <h1 className="text-lg font-bold sm:text-xl">The driver shows the label. The doorbell confirms the house, plays your instructions, and logs the delivery.</h1>
         </div>
         <div className="flex gap-2 text-sm">

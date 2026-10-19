@@ -46,7 +46,7 @@ export default function Door() {
   return (
     <div className={`flex min-h-full flex-col bg-gradient-to-b ${theme.bg} px-5 py-6 transition-colors duration-500`}>
       <div className="flex items-center justify-between text-xs text-mute">
-        <span className="font-semibold tracking-wide text-slate-300">DoorCheck · {data?.home.line1 ?? '…'}</span>
+        <span className="font-semibold tracking-wide text-slate-300">DeliveryHub · {data?.home.line1 ?? '…'}</span>
         {!sound && <Button kind="ghost" className="!px-3 !py-1 text-xs" onClick={() => setSound(true)}>🔈 Tap to enable voice</Button>}
       </div>
 

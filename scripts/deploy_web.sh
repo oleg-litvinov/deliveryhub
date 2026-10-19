@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the web app, upload it to the stack's web bucket, and invalidate CloudFront.
 set -euo pipefail
-STACK="${STACK:-doorcheck}"; REGION="${REGION:-us-east-2}"
+STACK="${STACK:-deliveryhub}"; REGION="${REGION:-us-east-2}"
 out() { aws cloudformation describe-stacks --stack-name "$STACK" --region "$REGION" --output text \
   --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue"; }
 BUCKET="$(out WebBucketName)"; DIST="$(out DistributionId)"; APP="$(out AppUrl)"

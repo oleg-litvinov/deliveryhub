@@ -1,4 +1,4 @@
-// Shared domain types for DoorCheck. Kept free of AWS imports so core logic is unit-testable.
+// Shared domain types for DeliveryHub. Kept free of AWS imports so core logic is unit-testable.
 
 export interface Address {
   line1: string // "123 Maple Street Apt 4"

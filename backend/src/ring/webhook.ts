@@ -1,4 +1,4 @@
-// Ring webhook payload (Ring Partner API v1.1 notifications). Only the fields DoorCheck needs.
+// Ring webhook payload (Ring Partner API v1.1 notifications). Only the fields DeliveryHub needs.
 
 export interface RingWebhook {
   meta: { version: string; time: string; request_id: string }

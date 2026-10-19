@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: DoorCheck - Ring doorbell package-label verification, delivery instructions and Delivery Box concept
+Description: DeliveryHub - Ring doorbell package-label verification, delivery instructions and Delivery Box concept
 
 Parameters:
   RingWebhookSecret:
@@ -233,14 +233,14 @@ Resources:
       DashboardBody: !Sub |
         {"widgets":[
           {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Scan latency (press → decision)","region":"${AWS::Region}","stat":"p50","period":300,
-            "metrics":[["DoorCheck","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}},
+            "metrics":[["DeliveryHub","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}},
           {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"Scans by verdict","region":"${AWS::Region}","stat":"SampleCount","period":300,
-            "metrics":[["DoorCheck","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}}
+            "metrics":[["DeliveryHub","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}}
         ]}
 
 Outputs:
   AppUrl:
-    Description: DoorCheck web app (homeowner app, Door Display, Doorbell Simulator)
+    Description: DeliveryHub web app (homeowner app, Door Display, Doorbell Simulator)
     Value: !Sub https://${Distribution.DomainName}
   RingWebhookUrl:
     Description: Paste into the Ring Developer Portal as the webhook endpoint

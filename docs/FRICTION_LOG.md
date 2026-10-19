@@ -8,7 +8,7 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 - **Expected:** An endpoint to play a short clip (or TTS text) on the doorbell's outdoor speaker.
 - **Actual:** The only audio endpoint is `POST /v1/devices/{id}/media/audio/playback`, documented for the **indoor Chime** with pre-provisioned `audio_ref` slots. Nothing for the doorbell speaker.
 - **Severity:** High for any visitor-facing app (deliveries, accessibility, caretaking).
-- **Workaround:** DoorCheck shows the result on a "Door Display" web page with Amazon Polly audio.
+- **Workaround:** DeliveryHub shows the result on a "Door Display" web page with Amazon Polly audio.
 - **Suggestion:** `POST /v1/devices/{id}/media/audio/playback` for doorbells, accepting a short MP3 URL or text (consented, rate-limited, watermark-style audio prefix if needed).
 
 ## 2. No official simulator or virtual device

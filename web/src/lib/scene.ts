@@ -104,7 +104,7 @@ function watermark(g: CanvasRenderingContext2D, deviceId: string, ts: number) {
   g.font = '600 26px Inter, Arial, sans-serif'
   g.fillStyle = 'rgba(255,255,255,.85)'
   g.fillText('SIMULATED DOORBELL', 32, 52)
-  const right = `${deviceId} · DoorCheck · ${new Date(ts).toISOString().replace('T', ' ').slice(0, 19)}`
+  const right = `${deviceId} · DeliveryHub · ${new Date(ts).toISOString().replace('T', ' ').slice(0, 19)}`
   g.textAlign = 'right'
   g.fillText(right, FRAME_W - 32, 52)
   g.textAlign = 'left'

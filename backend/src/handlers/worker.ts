@@ -76,7 +76,7 @@ export async function handler(scan: Scan): Promise<void> {
     })
     // CloudWatch Embedded Metric Format: latency and outcome without extra API calls.
     console.log(JSON.stringify({
-      _aws: { Timestamp: Date.now(), CloudWatchMetrics: [{ Namespace: 'DoorCheck', Dimensions: [['Verdict']], Metrics: [{ Name: 'ScanLatencyMs', Unit: 'Milliseconds' }, { Name: 'WorkerMs', Unit: 'Milliseconds' }] }] },
+      _aws: { Timestamp: Date.now(), CloudWatchMetrics: [{ Namespace: 'DeliveryHub', Dimensions: [['Verdict']], Metrics: [{ Name: 'ScanLatencyMs', Unit: 'Milliseconds' }, { Name: 'WorkerMs', Unit: 'Milliseconds' }] }] },
       Verdict: decision.verdict, ScanLatencyMs: latencyMs, WorkerMs: Date.now() - t0,
       labelSource: label.source, barcodes: barcodes.length, expected: decision.expected, boxUnlocked: policy.allow, simulated: scan.simulated,
     }))

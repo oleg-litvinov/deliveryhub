@@ -1,10 +1,10 @@
-# DoorCheck
+# DeliveryHub
 
-**The driver holds the label up to the Ring doorbell and presses the bell. DoorCheck confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
+**The driver holds the label up to the Ring doorbell and presses the bell. DeliveryHub confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
 
-Ring already knows *a* package is at the door. DoorCheck knows *which* package it is and *whether it belongs here*.
+Ring already knows *a* package is at the door. DeliveryHub knows *which* package it is and *whether it belongs here*.
 
-> **Live demo:** https://d2or6kgd4x3om0.cloudfront.net (no login; open on a laptop for the three-pane console)
+> **Live demo:** https://dgnb2hmunowzj.cloudfront.net (no login; open on a laptop for the three-pane console)
 >
 > Built for the [Build, Ship, Shape: Amazon Developer Hackathon](https://amazonappdev2026.devpost.com/) — Ring track + AWS Builder mini challenge.
 

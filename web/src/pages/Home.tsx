@@ -27,7 +27,7 @@ export default function Home() {
     <div className="mx-auto flex min-h-full max-w-md flex-col gap-4 px-4 pb-10 pt-5">
       <header className="flex items-center justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-accent">DoorCheck</div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-accent">DeliveryHub</div>
           <h1 className="text-xl font-bold">{h.name}</h1>
           <p className="text-sm text-mute">{fmtAddress(h.address)}</p>
         </div>
@@ -173,7 +173,7 @@ function Settings({ home, onChange }: { home: HomeT; onChange: () => void }) {
       </Card>
       <Card className="space-y-2 text-sm text-slate-300">
         <div className="font-semibold text-white">Privacy</div>
-        <p>A scan starts only when the driver shows the label and presses the bell. DoorCheck reads the address and tracking number with AI, never the recipient's name, and does no face recognition. Photos are deleted after 30 days.</p>
+        <p>A scan starts only when the driver shows the label and presses the bell. DeliveryHub reads the address and tracking number with AI, never the recipient's name, and does no face recognition. Photos are deleted after 30 days.</p>
       </Card>
       <Button kind="ghost" onClick={async () => { await api('/demo/reset', { method: 'POST' }); onChange() }}>Reset demo data</Button>
     </div>
