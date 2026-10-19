@@ -44,11 +44,19 @@ export class RingMediaError extends Error {
   }
 }
 
+export interface RingFrame {
+  bytes: Uint8Array
+  requestedAt: number
+  mediaTimestamp?: number // X-Media-Timestamp: the frame Ring actually returned (±10 s tolerance)
+  origin?: string // X-Media-Origin: "recording" | "snapshot"
+}
+
 /**
- * Fetch one frame at a timestamp. Step 1 returns 303 + a pre-signed Location; step 2 GETs it
- * without our bearer token (pre-signed URLs reject a second auth mechanism).
+ * Fetch the existing frame closest to a timestamp (Ring never captures a new image for this call).
+ * Step 1 returns 303 + a pre-signed Location; step 2 GETs it without our bearer token
+ * (pre-signed URLs reject a second auth mechanism).
  */
-export async function fetchSnapshot(deviceId: string, timestamp: number, width = 1920, height = 1080): Promise<Uint8Array> {
+export async function fetchSnapshot(deviceId: string, timestamp: number, width = 1920, height = 1080): Promise<RingFrame> {
   const token = await getAccessToken()
   const res = await fetch(`${API}/v1/devices/${encodeURIComponent(deviceId)}/media/image/download`, {
     method: 'POST',
@@ -63,22 +71,42 @@ export async function fetchSnapshot(deviceId: string, timestamp: number, width =
   }
   const img = await fetch(res.headers.get('location')!)
   if (!img.ok) throw new RingMediaError(img.status, 'DOWNLOAD_FAILED')
-  return new Uint8Array(await img.arrayBuffer())
+  const ts = Number(img.headers.get('x-media-timestamp'))
+  return {
+    bytes: new Uint8Array(await img.arrayBuffer()),
+    requestedAt: timestamp,
+    mediaTimestamp: Number.isFinite(ts) && ts > 0 ? ts : undefined,
+    origin: img.headers.get('x-media-origin') ?? undefined,
+  }
 }
 
-/** Retry 425 RECORDING_NOT_READY / 5xx with exponential backoff + jitter. */
-export async function fetchSnapshotWithRetry(deviceId: string, timestamp: number, deadlineMs = 12_000): Promise<Uint8Array> {
+/**
+ * Retry with exponential backoff + jitter while the recording catches up after a press:
+ * 425 RECORDING_NOT_READY, 416 MEDIA_NOT_FOUND (the frame may not exist yet) and 5xx.
+ */
+export async function fetchSnapshotWithRetry(deviceId: string, timestamp: number, deadlineMs = 12_000): Promise<RingFrame> {
   const start = Date.now()
   for (let attempt = 0; ; attempt++) {
     try {
       return await fetchSnapshot(deviceId, timestamp)
     } catch (e) {
-      const retryable = e instanceof RingMediaError && (e.status === 425 || e.status >= 500)
+      const retryable = e instanceof RingMediaError && (e.status === 425 || e.status === 416 || e.status >= 500)
       const wait = Math.min(4000, 500 * 2 ** attempt) * (0.5 + Math.random() / 2)
       if (!retryable || Date.now() - start + wait > deadlineMs) throw e
       await new Promise((r) => setTimeout(r, wait))
     }
   }
+}
+
+/** Ring returns the closest existing frame, so requests seconds apart can return the same one: keep each once. */
+export function uniqueFrames(frames: RingFrame[]): RingFrame[] {
+  const seen = new Set<string>()
+  return frames.filter((f) => {
+    const key = f.mediaTimestamp !== undefined ? `t${f.mediaTimestamp}` : `b${f.bytes.byteLength}:${f.bytes.subarray(0, 64).join(',')}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 export async function listDevices(): Promise<unknown> {

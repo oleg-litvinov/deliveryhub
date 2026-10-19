@@ -7,10 +7,14 @@ import { readLabel } from '../lib/label.js'
 import { simFrameKey, type Scan } from '../lib/scan.js'
 import { getBox, getHome, getMedia, listPackages, markPackage, putBox, putMedia, putScan } from '../lib/store.js'
 import { speak } from '../lib/voice.js'
-import { fetchSnapshotWithRetry } from '../ring/client.js'
+import { fetchSnapshotWithRetry, uniqueFrames } from '../ring/client.js'
 
-/** Frames around the press: the driver is usually still holding the label up for a second or two. */
-const FRAME_OFFSETS_MS = [0, 1500]
+/**
+ * Frames around the press. Ring returns the closest *existing* frame (±10 s), so we spread the requests
+ * (the driver often lifts the label just before pressing and holds it a moment after) and drop duplicates
+ * by X-Media-Timestamp. Later offsets may not be recorded yet; the client retries 425/416 until they are.
+ */
+const FRAME_OFFSETS_MS = [-1500, 0, 2500]
 
 async function getFrames(scan: Scan): Promise<Uint8Array[]> {
   if (scan.simulated) {
@@ -20,7 +24,12 @@ async function getFrames(scan: Scan): Promise<Uint8Array[]> {
   }
   const results = await Promise.allSettled(FRAME_OFFSETS_MS.map((o) => fetchSnapshotWithRetry(scan.deviceId, scan.eventTimestamp + o)))
   results.forEach((r) => r.status === 'rejected' && console.warn(JSON.stringify({ msg: 'snapshot_failed', error: String(r.reason) })))
-  return results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
+  const frames = uniqueFrames(results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : [])))
+  console.log(JSON.stringify({
+    msg: 'ring_frames', scanId: scan.scanId,
+    frames: frames.map((f) => ({ offsetMs: (f.mediaTimestamp ?? f.requestedAt) - scan.eventTimestamp, origin: f.origin })),
+  }))
+  return frames.map((f) => f.bytes)
 }
 
 export async function handler(scan: Scan): Promise<void> {
