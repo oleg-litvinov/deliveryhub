@@ -132,8 +132,11 @@ export function matchAddress(read: Address | undefined, home: Address): AddressC
 const CITY_STATE_ZIP = /^(.*?)[,\s]+([A-Z]{2})\s+(\d{5})(?:-?(\d{4}))?\s*$/i
 
 /**
- * Pull the ship-to address out of OCR'd label lines. Prefers the block after "SHIP TO";
- * otherwise uses the last city/state/zip line (the return address is usually printed first).
+ * Pull the ship-to address out of OCR'd label lines.
+ * If the label has a "SHIP TO" marker, only an address printed after it counts: when the ship-to
+ * block is unreadable we return nothing rather than fall back to the return address (that fallback
+ * once told a driver "wrong house" for a correct package; see docs/EVAL.md).
+ * Without a marker, the last city/state/zip line wins (the return address is usually printed first).
  * The line right after "SHIP TO" is the recipient name and is never returned.
  */
 export function parseAddressFromLines(lines: string[]): Address | undefined {
@@ -141,12 +144,13 @@ export function parseAddressFromLines(lines: string[]): Address | undefined {
   const shipTo = clean.findIndex((l) => /ship\s*to|deliver\s*to/i.test(l))
   const candidates: number[] = []
   clean.forEach((l, i) => CITY_STATE_ZIP.test(l) && candidates.push(i))
-  if (!candidates.length) return undefined
-  const cszIdx = shipTo >= 0 ? (candidates.find((i) => i > shipTo) ?? candidates[candidates.length - 1]) : candidates[candidates.length - 1]
+  const cszIdx = shipTo >= 0 ? candidates.find((i) => i > shipTo) : candidates[candidates.length - 1]
+  if (cszIdx === undefined) return undefined
 
   let streetIdx = -1
-  for (let i = cszIdx - 1; i >= Math.max(0, cszIdx - 3); i--) {
-    if (/^\d+[A-Z]?\s+\S+/i.test(clean[i])) { streetIdx = i; break }
+  for (let i = cszIdx - 1; i >= Math.max(shipTo + 1, cszIdx - 3, 0); i--) {
+    // A street line is a number followed by a real word ("123 MAPLE"), not OCR debris like "9 -".
+    if (/^\d+[A-Z]?\s+[A-Z]{2,}/i.test(clean[i])) { streetIdx = i; break }
   }
   if (streetIdx < 0) return undefined
   let line1 = clean[streetIdx]

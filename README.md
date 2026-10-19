@@ -1,4 +1,6 @@
-# DeliveryHub
+# DeliveryHub for Ring
+
+![Architecture](docs/architecture.svg)
 
 **The driver holds the label up to the Ring doorbell and presses the bell. DeliveryHub confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
 
@@ -33,8 +35,8 @@ Door Display (driver)  ◄─ poll ─ CloudFront ─► homeowner app (feed, ph
 | `backend/src/ring` | Ring Partner API client (OAuth refresh, snapshots), webhook parsing and HMAC verification |
 | `backend/src/handlers` | Lambda handlers: `webhook`, `worker`, `api` |
 | `infra/template.yaml` | AWS SAM: HTTP API, Lambdas, DynamoDB, S3, CloudFront, CloudWatch dashboard |
-| `web/` | Homeowner app, Door Display, Doorbell Simulator |
-| `docs/` | Friction log, Delivery Box design, PR-FAQ |
+| `web/` | Demo console (`/`), homeowner app (`/home`), Door Display (`/door`), Doorbell Simulator (`/sim`), live eval (`/eval`) |
+| `docs/` | [Eval results](docs/EVAL.md) · [Delivery Box design](docs/DELIVERY_BOX.md) · [PR-FAQ](docs/PR-FAQ.md) · [Friction log](docs/FRICTION_LOG.md) · [Product feedback](docs/PRODUCT_FEEDBACK.md) |
 
 ## Run the tests
 

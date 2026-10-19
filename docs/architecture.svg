@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="Inter, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0d9488"/></marker>
+    <style>
+      .box{fill:#fff;stroke:#cbd5e1;stroke-width:1.5}
+      .aws{fill:#fff7ed;stroke:#f59e0b;stroke-width:1.5}
+      .ring{fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5}
+      .us{fill:#f0fdfa;stroke:#14b8a6;stroke-width:1.5}
+      .t{font-size:15px;font-weight:700;fill:#0f172a}
+      .s{font-size:12px;fill:#475569}
+      .p{font-size:11px;font-weight:600;fill:#0f766e}
+      .l{stroke:#475569;stroke-width:1.6;fill:none;marker-end:url(#a)}
+      .lg{stroke:#0d9488;stroke-width:1.6;fill:none;stroke-dasharray:5 4;marker-end:url(#g)}
+      .h{font-size:13px;font-weight:700;fill:#64748b;letter-spacing:.08em}
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#f8fafc"/>
+  <text x="32" y="44" font-size="24" font-weight="800" fill="#0f172a">DeliveryHub for Ring — architecture</text>
+  <text x="32" y="68" class="s">Event-driven and serverless. Pillar labels: OPS operational excellence · SEC security · REL reliability · PERF performance · COST cost · SUS sustainability</text>
+
+  <!-- Door side -->
+  <text x="32" y="112" class="h">AT THE DOOR</text>
+  <rect class="ring" x="32" y="124" width="220" height="92" rx="12"/>
+  <text x="48" y="152" class="t">Ring video doorbell</text>
+  <text x="48" y="172" class="s">Driver shows label + presses bell</text>
+  <text x="48" y="190" class="s">button_press · package motion</text>
+  <rect class="us" x="32" y="234" width="220" height="70" rx="12"/>
+  <text x="48" y="262" class="t">Doorbell Simulator</text>
+  <text x="48" y="280" class="s">Same signed webhook,</text>
+  <text x="48" y="296" class="s">simulated camera</text>
+  <rect class="us" x="32" y="560" width="220" height="80" rx="12"/>
+  <text x="48" y="588" class="t">Door Display</text>
+  <text x="48" y="608" class="s">✓ / ✕ + homeowner instruction</text>
+  <text x="48" y="626" class="s">Polly voice · virtual Delivery Box</text>
+
+  <!-- Ring cloud -->
+  <rect class="ring" x="296" y="124" width="214" height="180" rx="12"/>
+  <text x="316" y="152" class="t">Ring Partner API</text>
+  <text x="316" y="172" class="s">api.amazonvision.com</text>
+  <text x="316" y="196" class="s">• Webhooks (HMAC X-Signature)</text>
+  <text x="316" y="214" class="s">• media/image/download</text>
+  <text x="316" y="232" class="s">• OAuth 2.0 refresh</text>
+  <text x="316" y="260" class="p">SEC: signed events, server-side</text>
+  <text x="316" y="276" class="p">tokens only</text>
+
+  <!-- AWS -->
+  <rect x="540" y="96" width="628" height="620" rx="16" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="560" y="122" class="h">AWS · us-east-2 · AWS SAM (infrastructure as code)</text>
+
+  <rect class="aws" x="560" y="140" width="190" height="96" rx="12"/>
+  <text x="576" y="166" class="t">API Gateway</text>
+  <text x="576" y="184" class="s">HTTP API · throttled</text>
+  <text x="576" y="206" class="p">REL: throttling</text>
+  <text x="576" y="222" class="p">SEC: TLS only</text>
+
+  <rect class="aws" x="790" y="140" width="358" height="96" rx="12"/>
+  <text x="806" y="166" class="t">Lambda · webhook</text>
+  <text x="806" y="184" class="s">verify HMAC → dedupe meta.request_id → async invoke</text>
+  <text x="806" y="206" class="p">REL: idempotent, ACK in &lt;1 s (Ring limit 5 s)</text>
+  <text x="806" y="222" class="p">PERF: heavy work off the request path</text>
+
+  <rect class="aws" x="790" y="262" width="358" height="190" rx="12"/>
+  <text x="806" y="288" class="t">Lambda · scan worker</text>
+  <text x="806" y="310" class="s">1. Ring snapshots (2 frames, retry 425 w/ backoff+jitter)</text>
+  <text x="806" y="328" class="s">2. zxing-wasm barcode → tracking number</text>
+  <text x="806" y="346" class="s">3. Bedrock vision → ship-to address (no names)</text>
+  <text x="806" y="364" class="s">4. Deterministic address match + expected list</text>
+  <text x="806" y="382" class="s">5. Delivery Box policy (fails closed)</text>
+  <text x="806" y="400" class="s">6. Polly instruction (cached by hash)</text>
+  <text x="806" y="424" class="p">REL: Bedrock → Textract fallback · voice best-effort</text>
+  <text x="806" y="440" class="p">SUS: arm64, scale to zero</text>
+
+  <rect class="aws" x="560" y="262" width="190" height="78" rx="12"/>
+  <text x="576" y="288" class="t">Amazon Bedrock</text>
+  <text x="576" y="306" class="s">Nova Lite (vision)</text>
+  <text x="576" y="326" class="p">COST: small, cheap model</text>
+  <rect class="aws" x="560" y="352" width="190" height="56" rx="12"/>
+  <text x="576" y="378" class="t">Amazon Textract</text>
+  <text x="576" y="396" class="s">OCR fallback</text>
+  <rect class="aws" x="560" y="420" width="190" height="56" rx="12"/>
+  <text x="576" y="446" class="t">Amazon Polly</text>
+  <text x="576" y="464" class="s">driver voice</text>
+
+  <rect class="aws" x="790" y="478" width="170" height="92" rx="12"/>
+  <text x="806" y="504" class="t">DynamoDB</text>
+  <text x="806" y="522" class="s">packages · scans · box</text>
+  <text x="806" y="540" class="p">SEC: encrypted at rest</text>
+  <text x="806" y="556" class="p">COST: on-demand</text>
+  <rect class="aws" x="978" y="478" width="170" height="92" rx="12"/>
+  <text x="994" y="504" class="t">S3</text>
+  <text x="994" y="522" class="s">photos · audio</text>
+  <text x="994" y="540" class="p">SEC: 30-day lifecycle,</text>
+  <text x="994" y="556" class="p">private, presigned URLs</text>
+
+  <rect class="aws" x="560" y="500" width="190" height="96" rx="12"/>
+  <text x="576" y="526" class="t">Lambda · app API</text>
+  <text x="576" y="544" class="s">packages, feed, box,</text>
+  <text x="576" y="560" class="s">simulator</text>
+  <text x="576" y="582" class="p">SEC: least-privilege IAM</text>
+
+  <rect class="aws" x="560" y="612" width="190" height="84" rx="12"/>
+  <text x="576" y="638" class="t">CloudFront + S3</text>
+  <text x="576" y="656" class="s">web app, same origin as API</text>
+  <text x="576" y="676" class="p">PERF: edge cache</text>
+  <rect class="aws" x="790" y="596" width="358" height="100" rx="12"/>
+  <text x="806" y="622" class="t">CloudWatch</text>
+  <text x="806" y="642" class="s">EMF metrics: ScanLatencyMs by verdict · dashboard</text>
+  <text x="806" y="660" class="s">X-Ray tracing on every Lambda</text>
+  <text x="806" y="682" class="p">OPS: you build it, you run it</text>
+
+  <!-- Homeowner -->
+  <rect class="us" x="32" y="430" width="220" height="100" rx="12"/>
+  <text x="48" y="458" class="t">Homeowner app</text>
+  <text x="48" y="478" class="s">Expected packages + instructions</text>
+  <text x="48" y="496" class="s">Feed with photo proof · alerts</text>
+  <text x="48" y="514" class="s">Remote unlock (human in the loop)</text>
+
+  <!-- Future -->
+  <rect x="300" y="560" width="200" height="136" rx="12" fill="#fff" stroke="#94a3b8" stroke-dasharray="5 4" stroke-width="1.5"/>
+  <text x="316" y="586" class="t">Delivery Box (concept)</text>
+  <text x="316" y="606" class="s">AWS IoT Core shadow</text>
+  <text x="316" y="624" class="s">X.509 cert per box</text>
+  <text x="316" y="642" class="s">Amazon Sidewalk link</text>
+  <text x="316" y="664" class="p">REL: fails closed, local PIN</text>
+  <text x="316" y="680" class="p">SEC: 60 s single-use token</text>
+
+  <!-- arrows -->
+  <path class="l" d="M252 170 H300"/>
+  <path class="l" d="M510 188 H560"/>
+  <path class="l" d="M252 268 H276 V322 H526 V222 H560"/>
+  <path class="l" d="M750 188 H790"/>
+  <path class="l" d="M970 236 V262"/>
+  <path class="l" d="M790 300 H750"/>
+  <path class="l" d="M790 380 H750"/>
+  <path class="l" d="M790 448 H750"/>
+  <path class="l" d="M900 452 V478"/>
+  <path class="l" d="M1060 452 V478"/>
+  <path class="l" d="M510 249 H772 V300 H790"/>
+  <text x="640" y="244" class="s">snapshots</text>
+  <path class="l" d="M790 540 H750"/>
+  <path class="l" d="M560 630 H520 V480 H252"/>
+  <path class="l" d="M560 650 H532 V545 H276 V600 H252"/>
+  <path class="lg" d="M790 444 H772 V488 H508 V628 H500"/>
+</svg>

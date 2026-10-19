@@ -34,6 +34,10 @@ describe('decide', () => {
     expect(d.verdict).toBe('wrong_address')
     expect(d.driverMessage).toContain('42 Oak St')
   })
+  it('a barely-legible mismatch asks for a retry instead of claiming wrong house', () => {
+    const d = decide({ home, expected: [], barcodes: [], label: { source: 'textract', confidence: 0.4, address: { line1: '128 Maple St', zip: '62704' } } })
+    expect(d.verdict).toBe('unreadable')
+  })
   it('right address, unexpected package', () => {
     const d = decide({ home, expected: [ups], barcodes: [], label: label('123 Maple St') })
     expect(d).toMatchObject({ verdict: 'right_address', expected: false })

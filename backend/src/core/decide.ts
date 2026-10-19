@@ -3,6 +3,8 @@ import { formatAddress, matchAddress } from './address.js'
 import { findPackage, zipFromBarcode } from './tracking.js'
 import type { BarcodeRead, Decision, Home, LabelRead, Package } from './types.js'
 
+const MIN_MISMATCH_CONFIDENCE = 0.6
+
 export function decide(input: {
   home: Home
   expected: Package[]
@@ -32,17 +34,19 @@ export function decide(input: {
     addressCheck,
   }
 
-  if (addressCheck.result === 'mismatch') {
+  // Telling a driver "wrong house" is a strong claim: a barely-legible read asks for a retry instead.
+  const shaky = addressCheck.read !== undefined && label.confidence < MIN_MISMATCH_CONFIDENCE
+  if (addressCheck.result === 'mismatch' && !shaky) {
     const where = addressCheck.read ? formatAddress(addressCheck.read) : 'a different address'
     return {
       ...base,
       verdict: 'wrong_address',
-      confidence: Math.max(label.confidence, 0.9),
+      confidence: addressCheck.read ? label.confidence : 0.9, // barcode-ZIP mismatches are exact
       driverMessage: `Wait, this package is for ${where}. This is ${home.address.line1}.`,
     }
   }
 
-  const addressOk = addressCheck.result === 'match'
+  const addressOk = addressCheck.result === 'match' && !shaky
   const knownByBarcode = found.pkg && found.source === 'barcode'
   if (addressOk || knownByBarcode) {
     const confidence = addressOk && knownByBarcode ? 0.99 : addressOk ? label.confidence : 0.9

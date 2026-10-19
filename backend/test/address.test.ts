@@ -48,6 +48,13 @@ describe('parseAddressFromLines', () => {
     const lines = ['ACME STORE', '1 Warehouse Rd', 'Reno, NV 89501', 'SHIP TO:', 'JANE DOE', '123 Maple St', 'Springfield IL 62704-1234', 'USPS TRACKING #']
     expect(parseAddressFromLines(lines)).toEqual({ line1: '123 Maple St', city: 'Springfield', state: 'IL', zip: '627041234' })
   })
+  it('never falls back to the return address when the ship-to block is unreadable', () => {
+    const lines = ['USPS PRIORITY MAIL', 'ACME FULFILLMENT', '1 WAREHOUSE RD', 'RENO NV 89501', 'SHIP TO:', 'J RIV~', '1Z3 MA#LE', 'TRACKING #']
+    expect(parseAddressFromLines(lines)).toBeUndefined()
+  })
+  it('rejects OCR debris as a street line', () => {
+    expect(parseAddressFromLines(['SHIP TO:', 'J. RIVERA', '9 -', 'SPRINGFIELD IL 62704'])).toBeUndefined()
+  })
   it('falls back to the last address block', () => {
     const lines = ['From', '1 Warehouse Rd', 'Reno, NV 89501', 'Jane', '42 Oak Ave', 'Apt 4B', 'New York, NY 10001']
     expect(parseAddressFromLines(lines)).toMatchObject({ line1: '42 Oak Ave Apt 4B', zip: '10001' })
