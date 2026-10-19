@@ -38,3 +38,19 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 - **Actual:** `media/image/download` with `at_timestamp` reads from recordings; `425 RECORDING_NOT_READY` is documented but no typical delay is given for images (clips say ~5 s).
 - **Workaround:** Retry 425/5xx with exponential backoff + jitter, request two frames (press, press + 1.5 s).
 - **Suggestion:** Document expected latency, or add a `live` snapshot type for button presses.
+
+## 6. Amazon Polly neural voices are not available in our project's Region
+- **Task:** Speak the homeowner's instruction to the driver with a natural voice.
+- **Steps:** `SynthesizeSpeech` with `Engine: neural`, `VoiceId: Joanna` from a Lambda in us-east-2.
+- **Expected:** Neural voice, as in us-east-1.
+- **Actual:** `ValidationException: The selected engine is not supported in this region`. `DescribeVoices` in us-east-2 returns 0 neural / generative / long-form voices and 8 standard en-US voices. Projects in the new AWS experience are pinned to one Region, so we can't call Polly in us-east-1.
+- **Severity:** Medium (the first scan failed until we caught it).
+- **Workaround:** Try neural, fall back to standard on `ValidationException`; speech is now best-effort so a voice error can never fail a delivery check.
+- **Suggestion:** List engine availability per Region on the Polly voice page, and return the supported engines in the error message.
+
+## 7. Bedrock "tokens per day" quota is 0 on the project
+- **Task:** Read the ship-to address from the doorbell frame with Amazon Nova Lite (Converse API, image input).
+- **Actual:** Every call throws `ThrottlingException: Too many tokens per day`. Service Quotas shows the applied account-level value as 0 (default 5.76B), not adjustable from the console; upgrading the project to the paid plan didn't change it. A support case is open.
+- **Severity:** High for the AI half of the product.
+- **Workaround:** The worker falls back to Amazon Textract OCR + our deterministic address parser automatically (`backend/src/lib/label.ts`). The demo works end to end on the fallback; every scan records which reader was used.
+- **Suggestion:** Show "quota 0" as an explicit onboarding blocker with a one-click request, instead of a throttling error.

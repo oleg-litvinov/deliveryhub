@@ -4,6 +4,8 @@
 
 Ring already knows *a* package is at the door. DoorCheck knows *which* package it is and *whether it belongs here*.
 
+> **Live demo:** https://d2or6kgd4x3om0.cloudfront.net (no login; open on a laptop for the three-pane console)
+>
 > Built for the [Build, Ship, Shape: Amazon Developer Hackathon](https://amazonappdev2026.devpost.com/) — Ring track + AWS Builder mini challenge.
 
 ## How it works
@@ -42,7 +44,7 @@ make test
 
 ## Deploy
 
-Requires AWS SAM CLI and an AWS profile (default `doorcheck`, Region `us-east-2`).
+Requires AWS SAM CLI and an AWS profile (set `PROFILE=`; Region `us-east-2`).
 
 ```bash
 make deploy PARAMS="RingWebhookSecret=<hmac key> RingClientId=<id> RingClientSecret=<secret> RingRefreshToken=<token> RingDeviceIds=<device id>"

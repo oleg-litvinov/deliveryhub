@@ -15,6 +15,9 @@ describe('tracking', () => {
     expect(r.pkg?.packageId).toBe('meds')
     expect(r.source).toBe('barcode')
   })
+  it('reports an unknown USPS package by its printed tracking number', () => {
+    expect(findPackage([meds], [{ text: '420627049400111899229988776655', format: 'Code128' }]).tracking).toBe('9400111899229988776655')
+  })
   it('extracts the destination ZIP from IMpb', () => {
     expect(zipFromBarcode('420627049400100000000000000000')).toBe('62704')
   })

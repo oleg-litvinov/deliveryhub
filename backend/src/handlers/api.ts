@@ -6,7 +6,7 @@ import { DEMO_HOME_ID, SAMPLE_LABELS, SIM_DEVICE_ID, demoHome, demoPackages } fr
 import type { Box, Package } from '../core/types.js'
 import { simFrameKey, type Scan } from '../lib/scan.js'
 import {
-  deletePackage, getBox, getHome, listPackages, listScans, markPackage, mediaGetUrl, mediaPutUrl, putBox, putHome, putPackage,
+  deletePackage, deleteScans, getBox, getHome, listPackages, listScans, markPackage, mediaGetUrl, mediaPutUrl, putBox, putHome, putPackage,
 } from '../lib/store.js'
 import { signBody } from '../ring/signature.js'
 import { buildWebhook } from '../ring/webhook.js'
@@ -38,6 +38,7 @@ async function reset() {
   const now = Date.now()
   const extra = (process.env.RING_DEVICE_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
   for (const p of await listPackages(HOME)) await deletePackage(HOME, p.packageId)
+  await deleteScans(HOME)
   await putHome(demoHome(extra))
   await Promise.all(demoPackages(now).map(putPackage))
   await putBox(newBox(HOME, now))

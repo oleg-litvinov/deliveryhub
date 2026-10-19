@@ -1,6 +1,6 @@
 // Persistence: one DynamoDB table (pk/sk) + one S3 bucket for snapshots, audio and simulator frames.
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { BatchWriteCommand, DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Box, Home, Package } from '../core/types.js'
@@ -61,6 +61,13 @@ export async function markPackage(homeId: string, packageId: string, status: Pac
 export const scanSk = (s: Pick<Scan, 'createdAt' | 'scanId'>) => `SCAN#${String(s.createdAt).padStart(15, '0')}#${s.scanId}`
 export const putScan = (s: Scan) => put(`HOME#${s.homeId}`, scanSk(s), s)
 export const listScans = async (homeId: string, limit = 30) => (await query<Scan>(`HOME#${homeId}`, 'SCAN#', limit, true)).map(strip)
+export async function deleteScans(homeId: string) {
+  const items = await query<{ pk: string; sk: string }>(`HOME#${homeId}`, 'SCAN#')
+  for (let i = 0; i < items.length; i += 25) {
+    const batch = items.slice(i, i + 25).map(({ pk, sk }) => ({ DeleteRequest: { Key: { pk, sk } } }))
+    await ddb.send(new BatchWriteCommand({ RequestItems: { [TABLE()]: batch } }))
+  }
+}
 
 // ---- delivery box
 export const getBox = async (homeId: string) => { const b = await get<Box>(`HOME#${homeId}`, 'BOX'); return b && strip(b) }

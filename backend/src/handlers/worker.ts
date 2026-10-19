@@ -50,7 +50,11 @@ export async function handler(scan: Scan): Promise<void> {
     if (policy.allow) box = transition(box, { type: 'unlock', token: crypto.randomUUID(), packageId: pkg?.packageId, now })
 
     const [audioKey] = await Promise.all([
-      speak(policy.allow ? `${spokenText} The delivery box is open for you.` : spokenText),
+      // Voice is best-effort: the decision and proof of delivery must not depend on it.
+      speak(policy.allow ? `${spokenText} The delivery box is open for you.` : spokenText).catch((e) => {
+        console.warn(JSON.stringify({ msg: 'speech_failed', error: String(e) }))
+        return undefined
+      }),
       putMedia(snapshotKey, frames[best], 'image/jpeg'),
       putBox(box),
       pkg && decision.verdict === 'right_address' ? markPackage(scan.homeId, pkg.packageId, 'delivered', { deliveredAt: now, scanId: scan.scanId }) : undefined,

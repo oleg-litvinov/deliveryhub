@@ -23,6 +23,9 @@ export function zipFromBarcode(text: string): string | undefined {
 
 const MIN_LEN = 10
 
+/** USPS IMpb: drop the "420" + ZIP(+4) routing prefix to get the printed tracking number. */
+export const stripImpbRouting = (code: string) => code.replace(/^420(\d{5}|\d{9})(?=9[2-5]\d{20})/, '')
+
 /** Find the expected package whose tracking number appears in any barcode (or equals the label read). */
 export function findPackage(
   expected: Package[],
@@ -41,6 +44,6 @@ export function findPackage(
     if (pkg) return { pkg, source: 'label', tracking: pkg.trackingNumber }
   }
   // Unknown package: report the most tracking-like code we saw, for the "unexpected package" log.
-  const best = codes.find((c) => guessCarrier(c)) ?? (labelTracking ? normalizeTracking(labelTracking) : undefined)
-  return { source: best ? (codes.includes(best) ? 'barcode' : 'label') : 'none', tracking: best }
+  const best = codes.map(stripImpbRouting).find((c) => guessCarrier(c)) ?? (labelTracking ? normalizeTracking(labelTracking) : undefined)
+  return { source: best ? (codes.some((c) => c.includes(best)) ? 'barcode' : 'label') : 'none', tracking: best }
 }

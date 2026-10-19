@@ -54,7 +54,6 @@ export function DeliveryBoxArt({ state, size = 120 }: { state: BoxState; size?: 
         <rect x="10" y="40" width="100" height="14" rx="4" fill="#26344f" stroke={glow} strokeWidth="2.5" />
       </g>
       <circle cx="60" cy="80" r="7" fill={glow} opacity={lock ? 0.9 : 0.35} />
-      <text x="60" y="84" textAnchor="middle" fontSize="9" fill="#0b1220" fontWeight="800">{lock ? '🔒' : ''}</text>
     </svg>
   )
 }

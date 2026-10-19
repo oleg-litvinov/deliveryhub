@@ -1,6 +1,6 @@
 STACK ?= doorcheck
 REGION ?= us-east-2
-PROFILE ?= doorcheck
+PROFILE ?= couchlink
 export AWS_PROFILE := $(PROFILE)
 
 .PHONY: test build deploy outputs web deploy-web
