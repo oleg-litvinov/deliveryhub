@@ -1,7 +1,7 @@
 // Persistence: one DynamoDB table (pk/sk) + one S3 bucket for snapshots, audio and simulator frames.
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { BatchWriteCommand, DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { Box, Home, Package } from '../core/types.js'
 import type { Scan } from './scan.js'
@@ -94,6 +94,17 @@ export async function claimEvent(requestId: string): Promise<boolean> {
 export interface RingTokens { accessToken: string; refreshToken: string; expiresAt: number }
 export const getRingTokens = async () => { const t = await get<RingTokens>('RING', 'TOKENS'); return t && strip(t) }
 export const saveRingTokens = (t: RingTokens) => put('RING', 'TOKENS', t)
+export const deleteRingTokens = () => ddb.send(new DeleteCommand({ TableName: TABLE(), Key: { pk: 'RING', sk: 'TOKENS' } }))
+
+// Tokens Ring sent to the Token Exchange URL, waiting for the user to sign in and claim them (expire in 1 h).
+export interface UnclaimedToken extends RingTokens { accountId: string; receivedAt: number }
+export const putUnclaimed = (t: UnclaimedToken) => put('RING#UNCLAIMED', `ACCT#${t.accountId}`, { ...t, ttl: Math.floor(Date.now() / 1000) + 3600 })
+export const listUnclaimed = async () => (await query<UnclaimedToken>('RING#UNCLAIMED', 'ACCT#')).map(strip)
+export const deleteUnclaimed = (accountId: string) => ddb.send(new DeleteCommand({ TableName: TABLE(), Key: { pk: 'RING#UNCLAIMED', sk: `ACCT#${accountId}` } }))
+
+// Audit log for account linking and data deletion (Ring content policy 4.1.3).
+export const audit = (action: string, detail: object) =>
+  put('AUDIT', `${new Date().toISOString()}#${crypto.randomUUID().slice(0, 8)}`, { action, ...detail })
 
 // ---- S3 media
 export const putMedia = (key: string, body: Uint8Array, contentType: string) =>
@@ -110,3 +121,22 @@ export async function getMedia(key: string): Promise<Uint8Array | undefined> {
 export const mediaGetUrl = (key: string) => getSignedUrl(s3, new GetObjectCommand({ Bucket: BUCKET(), Key: key }), { expiresIn: 3600 })
 export const mediaPutUrl = (key: string, contentType: string) =>
   getSignedUrl(s3, new PutObjectCommand({ Bucket: BUCKET(), Key: key, ContentType: contentType }), { expiresIn: 300 })
+
+/** Delete every object under a prefix; returns how many were removed. */
+export async function deleteMediaPrefix(prefix: string): Promise<number> {
+  let removed = 0
+  let token: string | undefined
+  do {
+    const page = await s3.send(new ListObjectsV2Command({ Bucket: BUCKET(), Prefix: prefix, ContinuationToken: token }))
+    const keys = (page.Contents ?? []).map((o) => ({ Key: o.Key! }))
+    if (keys.length) {
+      await s3.send(new DeleteObjectsCommand({ Bucket: BUCKET(), Delete: { Objects: keys, Quiet: true } }))
+      removed += keys.length
+    }
+    token = page.NextContinuationToken
+  } while (token)
+  return removed
+}
+
+export const deleteBox = (homeId: string) => ddb.send(new DeleteCommand({ TableName: TABLE(), Key: { pk: `HOME#${homeId}`, sk: 'BOX' } }))
+export const deleteHome = (homeId: string) => ddb.send(new DeleteCommand({ TableName: TABLE(), Key: { pk: `HOME#${homeId}`, sk: 'META' } }))

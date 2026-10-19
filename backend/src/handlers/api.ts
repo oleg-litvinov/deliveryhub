@@ -6,7 +6,7 @@ import { DEMO_HOME_ID, SAMPLE_LABELS, SIM_DEVICE_ID, demoHome, demoPackages } fr
 import type { Box, Package } from '../core/types.js'
 import { simFrameKey, type Scan } from '../lib/scan.js'
 import {
-  deletePackage, deleteScans, getBox, getHome, listPackages, listScans, markPackage, mediaGetUrl, mediaPutUrl, putBox, putHome, putPackage,
+  audit, deleteBox, deleteHome, deleteMediaPrefix, deletePackage, deleteScans, getBox, getHome, listPackages, listScans, markPackage, mediaGetUrl, mediaPutUrl, putBox, putHome, putPackage,
 } from '../lib/store.js'
 import { signBody } from '../ring/signature.js'
 import { buildWebhook } from '../ring/webhook.js'
@@ -98,6 +98,20 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return res(200, { scans: await Promise.all(scans.map(withMediaUrls)) })
     }
     if (method === 'POST' && path === '/demo/reset') { await reset(); return res(200, { ok: true }) }
+    if (method === 'POST' && path === '/account/delete') {
+      // Ring content policy 4.1.3: delete all copies, confirm to the user, keep an audit log.
+      const packages = await listPackages(HOME)
+      const scans = await listScans(HOME, 1000)
+      await Promise.all(packages.map((p) => deletePackage(HOME, p.packageId)))
+      await deleteScans(HOME)
+      await deleteBox(HOME)
+      await deleteHome(HOME)
+      // The Ring connection itself is ended in the Ring app; its app_integration_removed webhook deletes our tokens.
+      const objects = (await deleteMediaPrefix(`snapshots/${HOME}/`)) + (await deleteMediaPrefix('audio/')) + (await deleteMediaPrefix('sim/'))
+      const deleted = { packages: packages.length, deliveries: scans.length, files: objects }
+      await audit('account_data_deleted', { homeId: HOME, ...deleted })
+      return res(200, { deleted, at: new Date().toISOString() })
+    }
 
     // ---- Door Display (driver-facing): latest scan for a door
     if (method === 'GET' && path === '/door/latest') {

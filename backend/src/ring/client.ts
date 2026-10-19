@@ -87,3 +87,39 @@ export async function listDevices(): Promise<unknown> {
   if (!res.ok) throw new Error(`Ring devices failed: ${res.status}`)
   return res.json()
 }
+
+// ---- one-way account linking (architecture/app-deployment.md §5–6)
+async function oauth(params: Record<string, string>) {
+  const res = await fetch(OAUTH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ ...params, client_id: process.env.RING_CLIENT_ID!, client_secret: process.env.RING_CLIENT_SECRET! }),
+  })
+  if (!res.ok) throw new Error(`Ring OAuth ${params.grant_type} failed: ${res.status} ${await res.text()}`)
+  return (await res.json()) as { access_token: string; refresh_token: string; expires_in: number }
+}
+
+/** Exchange the authorization code Ring POSTed to our Token Exchange URL (must happen within 60 s). */
+export async function exchangeCode(code: string) {
+  const t = await oauth({ grant_type: 'authorization_code', code })
+  return { accessToken: t.access_token, refreshToken: t.refresh_token, expiresAt: Date.now() + t.expires_in * 1000 - 60_000 }
+}
+
+async function ava(path: string, token: string, init: RequestInit = {}) {
+  const res = await fetch(`${API}${path}`, { ...init, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) } })
+  if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${path} failed: ${res.status} ${await res.text()}`)
+  return res.status === 204 ? {} : res.json()
+}
+
+export const getAccountId = async (token: string) => ((await ava('/v1/users/me', token)) as { data: { id: string } }).data.id
+
+/** POST (nonce verification → "awaiting") then PATCH ("completed"); both are required by Ring. */
+export async function completeIntegration(token: string, accountIdentifier: string, nonce: string) {
+  await ava('/v1/accounts/me/app-integrations', token, { method: 'POST', body: JSON.stringify({ account_identifier: accountIdentifier, nonce }) })
+  await ava('/v1/accounts/me/app-integrations', token, { method: 'PATCH', body: JSON.stringify({ account_identifier: accountIdentifier, status: 'completed' }) })
+}
+
+export async function listDeviceIds(token: string): Promise<{ id: string; name?: string; type?: string }[]> {
+  const body = (await ava('/v1/devices', token)) as { data?: { id: string; type?: string; attributes?: { name?: string; kind?: string } }[] }
+  return (body.data ?? []).map((d) => ({ id: d.id, name: d.attributes?.name, type: d.attributes?.kind ?? d.type }))
+}

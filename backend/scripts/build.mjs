@@ -4,7 +4,7 @@ import { build } from 'esbuild'
 import { copyFileSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
 
-const handlers = ['webhook', 'worker', 'api']
+const handlers = ['webhook', 'worker', 'api', 'ringAuth']
 rmSync('dist', { recursive: true, force: true })
 await Promise.all(
   handlers.map((name) =>

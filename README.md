@@ -49,12 +49,13 @@ make test
 Requires AWS SAM CLI and an AWS profile (set `PROFILE=`; Region `us-east-2`).
 
 ```bash
-make deploy PARAMS="RingWebhookSecret=<hmac key> RingClientId=<id> RingClientSecret=<secret> RingRefreshToken=<token> RingDeviceIds=<device id>"
+# .env.deploy (gitignored): RING_CLIENT_ID, RING_CLIENT_SECRET, RING_WEBHOOK_SECRET (HMAC key), HOME_PASSCODE
+make deploy
 make deploy-web
 make outputs
 ```
 
-Then paste `RingWebhookUrl` into the Ring Developer Portal.
+Then paste `RingWebhookUrl`, `RingAccountLinkUrl` and `RingTokenExchangeUrl` into the Ring Developer Portal (Account linking), and connect your Ring account from the Ring app.
 
 ## Privacy
 

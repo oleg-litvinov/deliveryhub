@@ -5,7 +5,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { verifySignature } from '../ring/signature.js'
 import { isScanTrigger, parseWebhook } from '../ring/webhook.js'
 import type { Scan } from '../lib/scan.js'
-import { claimEvent, homeIdForDevice, putScan } from '../lib/store.js'
+import { audit, claimEvent, deleteRingTokens, homeIdForDevice, putScan } from '../lib/store.js'
 
 const lambda = new LambdaClient({})
 const json = (statusCode: number, body: object): APIGatewayProxyResultV2 => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
@@ -18,6 +18,12 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   }
   const hook = parseWebhook(raw)
   if (!hook) return json(400, { error: 'invalid payload' })
+  if (hook.data.type === 'app_integration_removed') {
+    // The user disconnected DeliveryHub in the Ring app: drop their Ring tokens immediately.
+    await deleteRingTokens()
+    await audit('ring_integration_removed', { requestId: hook.meta.request_id })
+    return json(200, { status: 'tokens_deleted' })
+  }
   if (!isScanTrigger(hook)) return json(200, { status: 'ignored', type: hook.data.type })
   if (!(await claimEvent(hook.meta.request_id))) return json(200, { status: 'duplicate' })
 

@@ -175,7 +175,29 @@ function Settings({ home, onChange }: { home: HomeT; onChange: () => void }) {
         <div className="font-semibold text-white">Privacy</div>
         <p>A scan starts only when the driver shows the label and presses the bell. DeliveryHub reads the address and tracking number with AI, never the recipient's name, and does no face recognition. Photos are deleted after 30 days.</p>
       </Card>
+      <DeleteData onChange={onChange} />
       <Button kind="ghost" onClick={async () => { await api('/demo/reset', { method: 'POST' }); onChange() }}>Reset demo data</Button>
     </div>
+  )
+}
+
+function DeleteData({ onChange }: { onChange: () => void }) {
+  const [step, setStep] = useState<'idle' | 'confirm' | 'busy' | 'done'>('idle')
+  const [result, setResult] = useState<{ deleted: Record<string, number | boolean>; at: string } | null>(null)
+  const run = async () => {
+    setStep('busy')
+    const r = await api<{ deleted: Record<string, number | boolean>; at: string }>('/account/delete', { method: 'POST' })
+    setResult(r); setStep('done'); onChange()
+  }
+  return (
+    <Card className="space-y-2 text-sm">
+      <div className="font-semibold text-white">Delete my data</div>
+      {step === 'idle' && <><p className="text-slate-300">Permanently deletes your packages, delivery history, doorbell photos and voice clips. To disconnect Ring, remove DeliveryHub in the Ring app: we delete your Ring access tokens the moment you do.</p><Button kind="danger" onClick={() => setStep('confirm')}>Delete all my data</Button></>}
+      {step === 'confirm' && <><p className="text-bad">This can't be undone. Delete everything?</p><div className="flex gap-2"><Button kind="danger" onClick={run}>Yes, delete everything</Button><Button kind="ghost" onClick={() => setStep('idle')}>Cancel</Button></div></>}
+      {step === 'busy' && <p className="text-mute">Deleting…</p>}
+      {step === 'done' && result && (
+        <p className="text-ok">✓ Deleted {String(result.deleted.packages)} packages, {String(result.deleted.deliveries)} deliveries and {String(result.deleted.files)} files at {new Date(result.at).toLocaleString()}. The demo home has been recreated with sample data.</p>
+      )}
+    </Card>
   )
 }

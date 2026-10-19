@@ -19,6 +19,11 @@ Parameters:
     NoEcho: true
     Default: ""
     Description: Initial Ring OAuth refresh token (rotated tokens are then kept in DynamoDB)
+  HomePasscode:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Passcode for the demo home's sign-in on the Ring Account Link page
   RingDeviceIds:
     Type: String
     Default: ""
@@ -143,6 +148,30 @@ Resources:
           Type: HttpApi
           Properties: { ApiId: !Ref HttpApi, Method: ANY, Path: "/api/{proxy+}" }
 
+  # Ring one-way account linking: Token Exchange URL + Account Link URL (sign-in page).
+  RingAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/dist/ringAuth/
+      Timeout: 20
+      Environment:
+        Variables:
+          RING_CLIENT_ID: !Ref RingClientId
+          RING_CLIENT_SECRET: !Ref RingClientSecret
+          HOME_PASSCODE: !Ref HomePasscode
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+      Events:
+        TokenExchange:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Method: POST, Path: /ring/token }
+        LinkPage:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Method: GET, Path: /ring/link }
+        LinkSubmit:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Method: POST, Path: /ring/link }
+
   # ------------------------------------------------------------------ web (S3 + CloudFront, same origin as the API)
   WebBucket:
     Type: AWS::S3::Bucket
@@ -243,8 +272,14 @@ Outputs:
     Description: DeliveryHub web app (homeowner app, Door Display, Doorbell Simulator)
     Value: !Sub https://${Distribution.DomainName}
   RingWebhookUrl:
-    Description: Paste into the Ring Developer Portal as the webhook endpoint
+    Description: Ring Developer Portal → Webhook URL
     Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/ring/webhook
+  RingAccountLinkUrl:
+    Description: Ring Developer Portal → Account Link URL
+    Value: !Sub https://${Distribution.DomainName}/ring/link
+  RingTokenExchangeUrl:
+    Description: Ring Developer Portal → Token Exchange URL
+    Value: !Sub https://${Distribution.DomainName}/ring/token
   WebBucketName:
     Value: !Ref WebBucket
   DistributionId:

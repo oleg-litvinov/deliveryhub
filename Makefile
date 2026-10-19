@@ -11,10 +11,12 @@ test:        ## Backend unit tests (address matching, decisions, box policy, web
 build:       ## Bundle Lambda handlers into backend/dist
 	cd backend && npm run build
 
-deploy: build ## Deploy backend + CloudFront (pass PARAMS="RingWebhookSecret=... ...")
+deploy: build ## Deploy backend + CloudFront. Secrets come from .env.deploy (gitignored); extra PARAMS="Key=Value" optional
+	set -a && . ./.env.deploy && set +a && \
 	sam deploy -t infra/template.yaml --stack-name $(STACK) --region $(REGION) --resolve-s3 \
 	  --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset \
-	  $(if $(PARAMS),--parameter-overrides $(PARAMS))
+	  --parameter-overrides "RingWebhookSecret=$$RING_WEBHOOK_SECRET" "RingClientId=$$RING_CLIENT_ID" \
+	  "RingClientSecret=$$RING_CLIENT_SECRET" "HomePasscode=$$HOME_PASSCODE" "LabelMode=bedrock" $(PARAMS)
 
 outputs:     ## Show stack outputs (AppUrl, RingWebhookUrl, ...)
 	aws cloudformation describe-stacks --stack-name $(STACK) --region $(REGION) \
