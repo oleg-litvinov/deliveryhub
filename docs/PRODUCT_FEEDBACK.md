@@ -29,7 +29,7 @@ Items marked `[[team]]` need first-hand input from the team before submission.
 
 **Used for:** querying the official docs from our coding agent (`search_docs`, `get_doc`). It confirmed the exact `X-Signature` format, the image-download semantics (existing frames only, ±10 s tolerance, `X-Media-Timestamp`), chime audio slots (Early Access), and the Appstore content policy's consent and data-deletion rules.
 **Worked well:** fast, needs no auth, and `get_doc` returns full markdown pages with code samples. Much easier than the single 370k-character web page.
-**Needs work:** natural-language queries often surface ring.com product pages (doorbell spec sheets) instead of developer docs. Some reasonable queries returned nothing ("image snapshot latency after button press", "computer vision OCR content policy") until we rephrased them as short titles. A `source: developer-docs` filter would help.
+**Needs work:** natural-language queries often surface ring.com product pages (doorbell spec sheets) instead of developer docs. Some reasonable queries returned nothing ("image snapshot latency after button press", "computer vision OCR content policy") until we rephrased them as short titles. A `source: developer-docs` filter would help. `get_doc("dev_portal/test.md")` returned "Error retrieving document" even though other pages link to the testing guide.
 **Again?** Yes. It became our first stop for Ring API questions.
 
 ## ring-api-helloworld (sample)

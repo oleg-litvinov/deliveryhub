@@ -17,7 +17,7 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 - **Actual:** No simulator in the docs. The Getting Started glossary mentions a sandbox "with synthetic Ring devices and events", but no page says how to get access. Staging needs a real Ring account, a registered US device and an active Ring Protection plan. The `ring-api-helloworld` sample only offers a `curl` to its own test route.
 - **Severity:** High (blocks teams without a doorbell).
 - **Workaround:** Built a Doorbell Simulator that sends Ring-format, HMAC-signed `button_press` webhooks through the same endpoint, and serves frames keyed by device + timestamp like `media/image/download`.
-- **Update (via the Ring Knowledge MCP):** the docs say Early Access scopes (chimes, sensors) "can be configured and tested in the sandbox/staging environment", but there is still no documented synthetic doorbell or camera you can drive.
+- **Update (via the Ring Knowledge MCP):** the docs say Early Access scopes (chimes, sensors) "can be configured and tested in the sandbox/staging environment", but there is still no documented synthetic doorbell or camera you can drive. The FAQ answers "Can I test without certification?" with "you can also use the sandbox environment with synthetic test data", yet no page says how to get into it. Connecting an account (staging user or private-app Connect) needs a Ring Protect Plan or Trial, and the testing guide lists "Ring devices registered to your account" as a prerequisite. A team without hardware can't exercise webhooks or snapshots at all.
 - **Suggestion:** Publish the sandbox, or a "virtual doorbell" in the Developer Portal where you upload an image/clip and fire events.
 
 ## 3. Webhook auth differs between the sample and the docs
