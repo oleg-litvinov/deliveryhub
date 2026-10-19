@@ -17,6 +17,7 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 - **Actual:** No simulator in the docs. The Getting Started glossary mentions a sandbox "with synthetic Ring devices and events", but no page says how to get access. Staging needs a real Ring account, a registered US device and an active Ring Protection plan. The `ring-api-helloworld` sample only offers a `curl` to its own test route.
 - **Severity:** High (blocks teams without a doorbell).
 - **Workaround:** Built a Doorbell Simulator that sends Ring-format, HMAC-signed `button_press` webhooks through the same endpoint, and serves frames keyed by device + timestamp like `media/image/download`.
+- **Update (via the Ring Knowledge MCP):** the docs say Early Access scopes (chimes, sensors) "can be configured and tested in the sandbox/staging environment", but there is still no documented synthetic doorbell or camera you can drive.
 - **Suggestion:** Publish the sandbox, or a "virtual doorbell" in the Developer Portal where you upload an image/clip and fire events.
 
 ## 3. Webhook auth differs between the sample and the docs
@@ -36,7 +37,8 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 ## 5. Snapshot timing is unclear for event-driven apps
 - **Task:** Grab the frame at the moment of a doorbell press.
 - **Actual:** `media/image/download` with `at_timestamp` reads from recordings; `425 RECORDING_NOT_READY` is documented but no typical delay is given for images (clips say ~5 s).
-- **Workaround:** Retry 425/5xx with exponential backoff + jitter, request two frames (press, press + 1.5 s).
+- **Update (via the Ring Knowledge MCP):** `image_download.md` says the endpoint returns *existing* frames only (no new capture), with a ±10 s tolerance; the real frame time comes back in `X-Media-Timestamp`. That means two requests 1.5 s apart can return the same frame.
+- **Workaround:** Retry 425/5xx with exponential backoff + jitter; request frames spaced further apart and drop duplicates by `X-Media-Timestamp`.
 - **Suggestion:** Document expected latency, or add a `live` snapshot type for button presses.
 
 ## 6. Amazon Polly neural voices are not available in our project's Region

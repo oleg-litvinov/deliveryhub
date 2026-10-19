@@ -25,6 +25,13 @@ Items marked `[[team]]` need first-hand input from the team before submission.
 
 **Would we build with it again?** Yes. The doorbell is the one device that sees every delivery, and the API gives exactly the right primitives (events + frames). Speaker access would unlock a whole category of apps.
 
+## Ring Appstore Knowledge MCP server (`knowledge.appstore-mcp.ring.amazon.dev/mcp`)
+
+**Used for:** querying the official docs from our coding agent (`search_docs`, `get_doc`). It confirmed the exact `X-Signature` format, the image-download semantics (existing frames only, ±10 s tolerance, `X-Media-Timestamp`), chime audio slots (Early Access), and the Appstore content policy's consent and data-deletion rules.
+**Worked well:** fast, needs no auth, and `get_doc` returns full markdown pages with code samples. Much easier than the single 370k-character web page.
+**Needs work:** natural-language queries often surface ring.com product pages (doorbell spec sheets) instead of developer docs. Some reasonable queries returned nothing ("image snapshot latency after button press", "computer vision OCR content policy") until we rephrased them as short titles. A `source: developer-docs` filter would help.
+**Again?** Yes. It became our first stop for Ring API questions.
+
 ## ring-api-helloworld (sample)
 
 **Used for:** reference for the OAuth refresh flow and the webhook payload shape (adapted under MIT, credited in NOTICE).
