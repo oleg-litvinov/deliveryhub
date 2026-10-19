@@ -1,0 +1,251 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: DoorCheck - Ring doorbell package-label verification, delivery instructions and Delivery Box concept
+
+Parameters:
+  RingWebhookSecret:
+    Type: String
+    NoEcho: true
+    Description: HMAC Signing Key from the Ring Developer Portal (also signs Doorbell Simulator events)
+  RingClientId:
+    Type: String
+    Default: ""
+  RingClientSecret:
+    Type: String
+    NoEcho: true
+    Default: ""
+  RingRefreshToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Initial Ring OAuth refresh token (rotated tokens are then kept in DynamoDB)
+  RingDeviceIds:
+    Type: String
+    Default: ""
+    Description: Comma-separated real Ring device ids mapped to the demo home
+  ModelId:
+    Type: String
+    Default: amazon.nova-lite-v1:0
+    Description: Bedrock vision model (in-Region; projects block cross-Region inference)
+  LabelMode:
+    Type: String
+    Default: bedrock
+    AllowedValues: [bedrock, textract]
+    Description: bedrock = Bedrock vision with Textract fallback; textract = OCR only
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures: [arm64]
+    Handler: index.handler
+    MemorySize: 512
+    Timeout: 15
+    Tracing: Active
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Table
+        MEDIA_BUCKET: !Ref MediaBucket
+        RING_WEBHOOK_SECRET: !Ref RingWebhookSecret
+        NODE_OPTIONS: --enable-source-maps
+
+Resources:
+  # ------------------------------------------------------------------ state
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      SSESpecification: { SSEEnabled: true }
+
+  # Snapshots (proof of delivery) auto-delete after 30 days: the retention promise is a mechanism.
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      BucketEncryption:
+        ServerSideEncryptionConfiguration: [{ ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } }]
+      LifecycleConfiguration:
+        Rules:
+          - { Id: snapshots-30d, Status: Enabled, Prefix: snapshots/, ExpirationInDays: 30 }
+          - { Id: sim-frames-1d, Status: Enabled, Prefix: sim/, ExpirationInDays: 1 }
+          - { Id: audio-30d, Status: Enabled, Prefix: audio/, ExpirationInDays: 30 }
+      CorsConfiguration:
+        CorsRules:
+          - { AllowedMethods: [GET, PUT], AllowedOrigins: ["*"], AllowedHeaders: ["*"], MaxAge: 3000 }
+
+  # ------------------------------------------------------------------ API
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      DefaultRouteSettings: { ThrottlingBurstLimit: 50, ThrottlingRateLimit: 20 }
+
+  WebhookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/dist/webhook/
+      Timeout: 5
+      Environment:
+        Variables:
+          WORKER_FUNCTION: !Ref WorkerFunction
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - LambdaInvokePolicy: { FunctionName: !Ref WorkerFunction }
+      Events:
+        Ring:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Method: POST, Path: /ring/webhook }
+
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/dist/worker/
+      MemorySize: 1536
+      Timeout: 60
+      Environment:
+        Variables:
+          MODEL_ID: !Ref ModelId
+          LABEL_MODE: !Ref LabelMode
+          RING_CLIENT_ID: !Ref RingClientId
+          RING_CLIENT_SECRET: !Ref RingClientSecret
+          RING_REFRESH_TOKEN: !Ref RingRefreshToken
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket }
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:InvokeModel]
+              Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/*
+            - Effect: Allow
+              Action: [polly:SynthesizeSpeech, textract:DetectDocumentText]
+              Resource: "*"
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/dist/api/
+      Environment:
+        Variables:
+          RING_DEVICE_IDS: !Ref RingDeviceIds
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - S3CrudPolicy: { BucketName: !Ref MediaBucket }
+      Events:
+        Api:
+          Type: HttpApi
+          Properties: { ApiId: !Ref HttpApi, Method: ANY, Path: "/api/{proxy+}" }
+
+  # ------------------------------------------------------------------ web (S3 + CloudFront, same origin as the API)
+  WebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      BucketEncryption:
+        ServerSideEncryptionConfiguration: [{ ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } }]
+
+  WebOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub ${AWS::StackName}-web-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  SpaRewrite:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub ${AWS::StackName}-spa-rewrite
+      AutoPublish: true
+      FunctionConfig: { Comment: SPA routes to index.html, Runtime: cloudfront-js-2.0 }
+      FunctionCode: |
+        function handler(event) {
+          var r = event.request;
+          if (r.uri.indexOf('.') === -1) { r.uri = '/index.html'; }
+          return r;
+        }
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: web
+            DomainName: !GetAtt WebBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt WebOac.Id
+            S3OriginConfig: { OriginAccessIdentity: "" }
+          - Id: api
+            DomainName: !Sub ${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+            CustomOriginConfig: { OriginProtocolPolicy: https-only, OriginSSLProtocols: [TLSv1.2] }
+        DefaultCacheBehavior:
+          TargetOriginId: web
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+          Compress: true
+          FunctionAssociations:
+            - { EventType: viewer-request, FunctionARN: !GetAtt SpaRewrite.FunctionMetadata.FunctionARN }
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
+          - PathPattern: /ring/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub ${WebBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}
+
+  # ------------------------------------------------------------------ observability
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${AWS::StackName}-scans
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Scan latency (press → decision)","region":"${AWS::Region}","stat":"p50","period":300,
+            "metrics":[["DoorCheck","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}},
+          {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"Scans by verdict","region":"${AWS::Region}","stat":"SampleCount","period":300,
+            "metrics":[["DoorCheck","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}}
+        ]}
+
+Outputs:
+  AppUrl:
+    Description: DoorCheck web app (homeowner app, Door Display, Doorbell Simulator)
+    Value: !Sub https://${Distribution.DomainName}
+  RingWebhookUrl:
+    Description: Paste into the Ring Developer Portal as the webhook endpoint
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/ring/webhook
+  WebBucketName:
+    Value: !Ref WebBucket
+  DistributionId:
+    Value: !Ref Distribution

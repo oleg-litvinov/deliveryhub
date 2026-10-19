@@ -1,0 +1,6 @@
+DoorCheck
+Copyright (c) 2026 DoorCheck contributors. Licensed under the MIT License (see LICENSE).
+
+Portions of the Ring Partner API client (OAuth refresh flow, webhook payload shape)
+are adapted from AmazonAppDev/ring-api-helloworld, Copyright (c) 2026 Amazon,
+licensed under the MIT License: https://github.com/AmazonAppDev/ring-api-helloworld
