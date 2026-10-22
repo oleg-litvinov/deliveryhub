@@ -110,7 +110,7 @@ Paste each entry from [`FRICTION_LOG.md`](FRICTION_LOG.md). Each one already has
 4. The API reference is a single ~370k-character page (Low–Medium)
 5. Snapshot timing for event-driven apps is undocumented: existing frames only, ±10 s (Medium)
 6. Amazon Polly neural voices are unavailable in us-east-2 (Medium)
-7. The Bedrock tokens-per-day quota is applied at 0 on the project (High)
+7. The Bedrock tokens-per-day quota is applied at 0 and not adjustable; a paid upgrade and a support case didn't fix it before the deadline (High)
 
 ---
 
