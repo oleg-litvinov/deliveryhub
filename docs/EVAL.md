@@ -75,6 +75,6 @@ All 6 retries happened at ≈ 14 cm **with** 10° tilt **and** blur.
 
 ## Limitations
 
-- Frames are simulated: the optics model is barrel distortion plus blur plus JPEG, not a real Ring sensor. Validating on a real doorbell is the next step (`[[team]]`).
+- Frames are simulated: the optics model is barrel distortion plus blur plus JPEG, not a real Ring sensor. Validating on a real doorbell is the next step.
 - 4 label designs, all with fictional addresses and clean print. Real labels have more layouts, wrinkles and glare.
 - Textract only. Bedrock (Nova Lite) will be evaluated with the same harness once the quota is fixed.

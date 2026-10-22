@@ -1,7 +1,6 @@
 # Product feedback
 
 Required for each tool, API and SDK we used. Detailed repro steps are in [FRICTION_LOG.md](FRICTION_LOG.md).
-Items marked `[[team]]` need first-hand input from the team before submission.
 
 ## Ring Partner API (Amazon Vision API)
 
