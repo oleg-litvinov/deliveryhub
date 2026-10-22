@@ -50,9 +50,19 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
 - **Workaround:** Try neural, fall back to standard on `ValidationException`; speech is now best-effort so a voice error can never fail a delivery check.
 - **Suggestion:** List engine availability per Region on the Polly voice page, and return the supported engines in the error message.
 
-## 7. Bedrock "tokens per day" quota is 0 on the project
-- **Task:** Read the ship-to address from the doorbell frame with Amazon Nova Lite (Converse API, image input).
-- **Actual:** Every call throws `ThrottlingException: Too many tokens per day`. Service Quotas shows the applied account-level value as 0 (default 5.76B), not adjustable from the console; upgrading the project to the paid plan didn't change it. A support case is open.
-- **Severity:** High for the AI half of the product.
-- **Workaround:** The worker falls back to Amazon Textract OCR + our deterministic address parser automatically (`backend/src/lib/label.ts`). The demo works end to end on the fallback; every scan records which reader was used.
-- **Suggestion:** Show "quota 0" as an explicit onboarding blocker with a one-click request, instead of a throttling error.
+## 7. Bedrock "tokens per day" quota is applied at 0 on the project, and nothing fixes it
+- **Task:** Read the ship-to address from a doorbell frame with Amazon Nova Lite (Converse API, image input) from a Lambda in us-east-2.
+- **Steps:**
+  1. Granted the Lambda `bedrock:InvokeModel` on `foundation-model/*` in-Region and called `Converse` with `amazon.nova-lite-v1:0`.
+  2. Checked Service Quotas: `aws service-quotas get-service-quota --service-code bedrock --quota-code L-45E0AD92` (Nova Lite tokens per day).
+  3. Upgraded the project from the free plan to the paid plan (Oct 18), then rechecked.
+  4. Opened an AWS Support case with the quota code. The CLI can't read the case on this plan (`SubscriptionRequiredException`), so follow-up only happens in the console.
+  5. Rechecked on Oct 21, two days before the deadline.
+- **Expected:** The default quota (5.76B tokens per day for Nova Lite), or at least a quota-increase request that can be submitted from the console.
+- **Actual:** Every call fails with `ThrottlingException: Too many tokens per day, please wait before trying again`, from the very first request. Service Quotas shows the AWS default as 5.76B, but the **applied account-level value is 0** and it's marked not adjustable, so there's no "request increase" button. The paid upgrade changed nothing. **Still 0 on Oct 21**, so we submitted without Bedrock in the live path.
+- **Severity:** High. It blocks the generative-AI half of the product and the most natural Amazon AI service for an AWS Builder entry. The error message also points in the wrong direction: "too many tokens" on a first call reads like a code bug, not an account setting.
+- **Workaround:** The worker falls back automatically to Amazon Textract OCR plus our deterministic ship-to parser (`backend/src/lib/label.ts`). The live demo and the 120-press eval run on that path, and every scan records which reader was used. The Bedrock path stays wired and takes over with no redeploy once the quota is lifted.
+- **Suggestion:**
+  - When an applied quota is 0, return a distinct error (e.g. `AccessDeniedException: daily token quota for this model is 0 on this account`) with a link to fix it.
+  - Show "Bedrock quota 0" as an onboarding blocker in the console and in AWS Settings for new projects.
+  - Make the value adjustable, or let the paid-plan upgrade reset it to the default.
