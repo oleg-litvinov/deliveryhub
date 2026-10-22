@@ -36,6 +36,13 @@ describe('box state machine', () => {
     b = transition(b, { type: 'lid_close', now: t0 + 9000 })
     expect(b.state).toBe('SECURED')
   })
+  it('relocks immediately when a new unverified scan arrives', () => {
+    const b = transition(newBox('h', t0), { type: 'unlock', token: 'abc', now: t0 })
+    const r = transition(b, { type: 'relock', now: t0 + 5000 })
+    expect(r.state).toBe('LOCKED')
+    expect(r.token).toBeUndefined()
+    expect(transition({ ...newBox('h', t0), state: 'SECURED' }, { type: 'relock', now: t0 }).state).toBe('SECURED')
+  })
   it('relocks when the token expires', () => {
     const b = transition(newBox('h', t0), { type: 'unlock', token: 'abc', now: t0 })
     expect(transition(b, { type: 'tick', now: t0 + UNLOCK_TTL_MS + 1 }).state).toBe('LOCKED')

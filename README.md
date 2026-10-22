@@ -1,6 +1,5 @@
 # DeliveryHub for Ring
 
-![Architecture](docs/architecture.svg)
 
 **The driver holds the label up to the Ring doorbell and presses the bell. DeliveryHub confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
 
@@ -10,7 +9,21 @@ Ring already knows *a* package is at the door. DeliveryHub knows *which* package
 >
 > Built for the [Build, Ship, Shape: Amazon Developer Hackathon](https://amazonappdev2026.devpost.com/) — Ring track + AWS Builder mini challenge.
 
+## Try it in 60 seconds
+
+1. Open **https://dgnb2hmunowzj.cloudfront.net** on a laptop. No login.
+2. In the left pane (**Doorbell Simulator**), keep "Medication" selected and press **🔔 Press the doorbell**.
+3. Watch the middle pane (**Door Display**) confirm the right house and show the homeowner's instruction (tap "enable voice" to hear it), then **Lift lid** / **Close lid** on the Delivery Box.
+4. Watch the right pane (**homeowner app**): delivered, with photo proof and the reason.
+5. Try **Neighbor's package**: wrong house, alert, box stays locked. **Settings → Reset demo data** starts over.
+
+| Right house | Wrong house | Homeowner app |
+|---|---|---|
+| ![](docs/screenshots/2-door-right-address.png) | ![](docs/screenshots/3-door-wrong-address.png) | ![](docs/screenshots/4-homeowner-feed.png) |
+
 ## How it works
+
+![Architecture](docs/architecture.svg)
 
 ```
 Ring doorbell ─ button_press webhook (HMAC-signed) ─► API Gateway → webhook Lambda ── verify, dedupe, ACK < 1 s
@@ -36,7 +49,7 @@ Door Display (driver)  ◄─ poll ─ CloudFront ─► homeowner app (feed, ph
 | `backend/src/handlers` | Lambda handlers: `webhook`, `worker`, `api` |
 | `infra/template.yaml` | AWS SAM: HTTP API, Lambdas, DynamoDB, S3, CloudFront, CloudWatch dashboard |
 | `web/` | Demo console (`/`), homeowner app (`/home`), Door Display (`/door`), Doorbell Simulator (`/sim`), live eval (`/eval`) |
-| `docs/` | [Eval results](docs/EVAL.md) · [Delivery Box design](docs/DELIVERY_BOX.md) · [PR-FAQ](docs/PR-FAQ.md) · [Friction log](docs/FRICTION_LOG.md) · [Product feedback](docs/PRODUCT_FEEDBACK.md) |
+| `docs/` | [Submission pack](docs/SUBMISSION.md) · [Eval results](docs/EVAL.md) · [Delivery Box design](docs/DELIVERY_BOX.md) · [PR-FAQ](docs/PR-FAQ.md) · [Friction log](docs/FRICTION_LOG.md) · [Product feedback](docs/PRODUCT_FEEDBACK.md) |
 
 ## Run the tests
 

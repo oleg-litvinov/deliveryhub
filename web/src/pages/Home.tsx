@@ -99,7 +99,7 @@ function Activity({ scans, pkgById, home }: { scans: Scan[]; pkgById: Map<string
                 : <div className="grid h-20 w-32 place-items-center rounded-lg bg-black/30 text-xs text-mute">{s.status === 'processing' ? '…' : 'no photo'}</div>}
               <div className="min-w-0 flex-1 space-y-1">
                 <ScanBadge scan={s} />
-                <div className="truncate font-semibold">{pkg?.nickname ?? (d ? (d.expected ? 'Package' : 'Unexpected package') : 'Doorbell press')}</div>
+                <div className="truncate font-semibold">{pkg?.nickname ?? (!d ? 'Doorbell press' : d.verdict === 'wrong_address' ? 'Not for this house' : d.verdict === 'unreadable' ? 'Label not readable' : d.expected ? 'Package' : 'Unexpected package')}</div>
                 <div className="text-xs text-mute">{timeAgo(s.createdAt)}{s.simulated ? ' · simulator' : ''}{s.latencyMs ? ` · ${(s.latencyMs / 1000).toFixed(1)} s` : ''}</div>
               </div>
             </div>

@@ -28,6 +28,7 @@ export type BoxEvent =
   | { type: 'lid_open'; token?: string; now: number }
   | { type: 'lid_close'; now: number }
   | { type: 'tick'; now: number }
+  | { type: 'relock'; now: number } // a new, unverified scan while the box waits for the previous driver
 
 /** Pure state transition. Unknown or invalid events leave the box locked or flag tamper. */
 export function transition(box: Box, ev: BoxEvent): Box {
@@ -51,6 +52,9 @@ export function transition(box: Box, ev: BoxEvent): Box {
     case 'lid_close':
       if (box.state === 'OPEN') return { ...next, state: 'SECURED' }
       return box
+    case 'relock':
+      if (box.state !== 'UNLOCKED') return box
+      return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined }
     case 'tick':
       if (box.state === 'UNLOCKED' && ev.now > (box.tokenExpiresAt ?? 0)) {
         return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined }

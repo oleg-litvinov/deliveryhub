@@ -57,6 +57,8 @@ export async function handler(scan: Scan): Promise<void> {
     let box = transition((await getBox(scan.homeId)) ?? newBox(scan.homeId, now), { type: 'tick', now })
     const policy = unlockPolicy(decision, box, now)
     if (policy.allow) box = transition(box, { type: 'unlock', token: crypto.randomUUID(), packageId: pkg?.packageId, now })
+    // Someone else is at the door now: an open unlock window from an earlier driver closes.
+    else box = transition(box, { type: 'relock', now })
 
     const [audioKey] = await Promise.all([
       // Voice is best-effort: the decision and proof of delivery must not depend on it.

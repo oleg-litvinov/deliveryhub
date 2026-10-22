@@ -40,7 +40,8 @@ The box unlocks only if **all** of these hold:
 
 ```
             unlock (policy ok, or homeowner remote unlock)
-  LOCKED ─────────────────────────────────────────► UNLOCKED ── 60 s timeout ──► LOCKED
+  LOCKED ─────────────────────────────────────────► UNLOCKED ── 60 s timeout, or a new ──► LOCKED
+                                                                unverified scan (relock)
     ▲                                                   │ lid_open (valid token)
     │                                                   ▼
     │                                                 OPEN
@@ -90,4 +91,5 @@ In production, `VirtualBox` is replaced by the IoT shadow adapter. The policy, t
 | Replaying a photo of a real label | Unlock is rate-limited, single-use and expires in 60 s. The package is marked delivered after the first scan, so it's no longer "expected". |
 | Prying the lid open | `TAMPER` state, alert to the homeowner, and a doorbell snapshot |
 | Cloud outage | Box stays locked (fails closed). Local PIN override. |
+| Someone else walks up while the box is still unlocked for a verified driver | Any new scan that fails the policy (wrong house, unknown or unreadable label) **re-locks the box immediately** |
 | AI misreads an address | The box never opens without a barcode match, and address mismatches always block |

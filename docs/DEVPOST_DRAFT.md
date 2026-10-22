@@ -3,7 +3,7 @@
 **Tagline:** The driver shows the label to your Ring doorbell. DeliveryHub confirms it's the right house, tells the driver your instructions for that package, and logs the delivery with a photo.
 
 **Track:** Ring · **Mini challenge:** AWS Builder
-**Live demo (no login):** https://dgnb2hmunowzj.cloudfront.net · **Repo:** https://github.com/oleg-litvinov/deliveryhub · **Video:** `[[team]]`
+**Live demo (no login):** https://dgnb2hmunowzj.cloudfront.net · **Repo:** https://github.com/oleg-litvinov/deliveryhub · **Video:** `[[team: YouTube link]]`
 
 ---
 
@@ -20,7 +20,7 @@ Ring can tell you that *a* package is on your porch. It can't tell you *which* o
    - ❌ **Wrong house:** "Wait, this package is for 42 Oak St." The homeowner gets an alert.
    - ↻ **Can't read it:** the driver is asked to hold the label closer. We never guess.
    - ⓘ **Right house, but not on the expected list:** delivered and flagged as unexpected.
-4. **Delivery Box (concept):** for a verified, expected package, a lockable box by the door unlocks for 60 seconds, then reports "Secured in box". It fails closed: never on an AI-only read, never for unexpected packages without the homeowner's one-tap approval.
+4. **Delivery Box (concept):** for a verified, expected package, a lockable box by the door unlocks for 60 seconds, then reports "Secured in box". It fails closed: never on an AI-only read, never for unexpected packages without the homeowner's one-tap approval, and any new unverified scan re-locks it immediately.
 
 Every decision is explainable: the app shows the address read from the label next to the home address, the reason, and which reader (barcode / Bedrock / Textract) produced it.
 
@@ -28,7 +28,15 @@ Every decision is explainable: the app shows the address read from the label nex
 
 ![Architecture](architecture.svg)
 
-- **Ring Partner API:** `button_press` and `motion_detected` (`package_delivery`) webhooks with HMAC-SHA256 `X-Signature` verification. `media/image/download` (`at_timestamp`) for two frames around the press, with exponential backoff and jitter on `425 RECORDING_NOT_READY`. OAuth refresh with token rotation stored in DynamoDB.
+| Driver at the door | Door Display | Homeowner app |
+|---|---|---|
+| ![](screenshots/1-simulator.png) | ![](screenshots/2-door-right-address.png) | ![](screenshots/4-homeowner-feed.png) |
+
+- **Ring Partner API**, built to the spec we pulled through the **Ring Appstore Knowledge MCP server**:
+  - `button_press` and `motion_detected` (`package_delivery`) webhooks with HMAC-SHA256 `X-Signature` verification and `meta.request_id` dedupe;
+  - `media/image/download` (`at_timestamp`) for three frames around the press (−1.5 s, 0, +2.5 s), de-duplicated by `X-Media-Timestamp`, with backoff and jitter on `425`/`416` while the recording catches up;
+  - **one-way account linking:** Token Exchange URL (code → tokens within 60 s), an Account Link page with the required sign-in and a consent disclosure, nonce = base64url(HMAC-SHA256(key, `time:account`)) checked in constant time within 600 s, then `POST` + `PATCH /v1/accounts/me/app-integrations`;
+  - OAuth refresh with token rotation; `app_integration_removed` deletes the tokens.
 - **Webhook Lambda:** verifies the signature, dedupes on `meta.request_id`, records a "Reading label…" scan and async-invokes the worker. ACKs in under a second (Ring requires 5 s).
 - **Scan worker Lambda:**
   - zxing-wasm decodes the barcode into a tracking number. Matching uses containment, so USPS IMpb (`420` + ZIP + tracking) and FedEx 34-digit codes work.
@@ -44,7 +52,8 @@ Every decision is explainable: the app shows the address read from the label nex
   - the **Doorbell Simulator**, which sends the exact signed Ring webhook through the same pipeline with a simulated camera;
   - a live **eval page** anyone can rerun.
 - **Ops:** one AWS SAM template; arm64 Lambdas; X-Ray tracing; CloudWatch Embedded Metric Format (`ScanLatencyMs` by verdict) and a dashboard.
-- **Tests:** 39 unit tests covering address matching, tracking lookup, decisions, the Delivery Box policy and state machine, webhook signatures and barcode decoding.
+- **Tests:** 49 unit tests covering address matching, tracking lookup, decisions, the Delivery Box policy and state machine, webhook signatures, account-linking nonces, Ring media retries and barcode decoding.
+- **Ring content policy built in:** consent before any data is collected, "Delete my data" with confirmation and an audit log, data minimization (no names, no faces), and 30-day retention.
 
 ## Challenges we ran into (mini-COE)
 
@@ -55,7 +64,9 @@ Every decision is explainable: the app shows the address read from the label nex
 - *Why was that allowed?* We tested only the happy path, not "the ship-to block is unreadable".
 - **Mechanism:** an address only counts if it's printed after the ship-to marker; garbage street lines are rejected; a low-confidence mismatch asks the driver to retry instead of claiming "wrong house". Regression tests lock all three in. Result: wrong decisions went from **4 to 0**. The cases that used to be wrong now ask the driver to retry ([full COE](EVAL.md#coe-right-house-packages-announced-as-wrong-house)).
 
-Other friction: there's no doorbell-speaker API (we built the Door Display), no Ring simulator (we built one), Polly has no neural voices in our Region, and our Bedrock quota is 0 (Textract carries the demo). All of it is in the friction log.
+Other friction: there's no doorbell-speaker API (we built the Door Display), no Ring simulator and no documented way into the sandbox (we built a simulator), Polly has no neural voices in our Region, and our Bedrock quota is 0 (Textract carries the demo). All of it is in the friction log.
+
+**Honest scope note:** we don't own a Ring device, and the sandbox isn't open to us. Ring's hackathon rules explicitly allow a simulator. Every Ring integration path is real code that is deployed and calls Ring at runtime (our credentials reach `oauth.ring.com`), but the frames in the demo and the eval come from the Doorbell Simulator.
 
 ## Accomplishments we're proud of
 
@@ -83,7 +94,7 @@ Other friction: there's no doorbell-speaker API (we built the Door Display), no 
 
 | Criterion | Evidence |
 |---|---|
-| **Tech Implementation** | Ring webhooks with HMAC verification, idempotency, snapshots with backoff, OAuth refresh. A 9-service serverless AWS pipeline in one SAM template. 39 unit tests. A live 120-case eval with p50/p90 latency. |
+| **Tech Implementation** | Ring webhooks with HMAC verification and idempotency, snapshots with retries and dedupe, OAuth refresh, and full one-way account linking. A 9-service serverless AWS pipeline in one SAM template. 49 unit tests. A live 120-case eval with p50/p90 latency. |
 | **Design** | Zero new behaviour for the driver (show the label, press the bell). A Door Display readable at arm's length. A homeowner feed with photo proof and a "why" behind every decision. A three-pane demo console for judges. |
 | **Potential Impact** | Targets Ring's *package/delivery management* priority. Works for every carrier. A path to the Ring Appstore, plus a hardware accessory (Delivery Box) and business/front-desk mode. |
 | **Quality of the Idea** | Turns the doorbell camera into a *consented* helper for the person at the door rather than a surveillance tool: Ring knows *a* package is there; DeliveryHub knows *which* and *whether it belongs here*. |

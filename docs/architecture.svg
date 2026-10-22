@@ -40,9 +40,10 @@
   <text x="316" y="172" class="s">api.amazonvision.com</text>
   <text x="316" y="196" class="s">• Webhooks (HMAC X-Signature)</text>
   <text x="316" y="214" class="s">• media/image/download</text>
-  <text x="316" y="232" class="s">• OAuth 2.0 refresh</text>
-  <text x="316" y="260" class="p">SEC: signed events, server-side</text>
-  <text x="316" y="276" class="p">tokens only</text>
+  <text x="316" y="232" class="s">• One-way account linking</text>
+  <text x="316" y="250" class="s">  (nonce, POST + PATCH)</text>
+  <text x="316" y="276" class="p">SEC: signed events, server-side</text>
+  <text x="316" y="292" class="p">tokens only</text>
 
   <!-- AWS -->
   <rect x="540" y="96" width="628" height="620" rx="16" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 5"/>
@@ -62,7 +63,7 @@
 
   <rect class="aws" x="790" y="262" width="358" height="190" rx="12"/>
   <text x="806" y="288" class="t">Lambda · scan worker</text>
-  <text x="806" y="310" class="s">1. Ring snapshots (2 frames, retry 425 w/ backoff+jitter)</text>
+  <text x="806" y="310" class="s">1. Ring snapshots: 3 frames, dedupe, retry 425/416</text>
   <text x="806" y="328" class="s">2. zxing-wasm barcode → tracking number</text>
   <text x="806" y="346" class="s">3. Bedrock vision → ship-to address (no names)</text>
   <text x="806" y="364" class="s">4. Deterministic address match + expected list</text>
@@ -95,8 +96,8 @@
 
   <rect class="aws" x="560" y="500" width="190" height="96" rx="12"/>
   <text x="576" y="526" class="t">Lambda · app API</text>
-  <text x="576" y="544" class="s">packages, feed, box,</text>
-  <text x="576" y="560" class="s">simulator</text>
+  <text x="576" y="544" class="s">packages, feed, box, simulator,</text>
+  <text x="576" y="560" class="s">Ring link + token exchange</text>
   <text x="576" y="582" class="p">SEC: least-privilege IAM</text>
 
   <rect class="aws" x="560" y="612" width="190" height="84" rx="12"/>

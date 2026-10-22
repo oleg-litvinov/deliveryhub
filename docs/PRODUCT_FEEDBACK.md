@@ -21,7 +21,7 @@ Items marked `[[team]]` need first-hand input from the team before submission.
 - **Snapshot latency after an event isn't documented** (friction #5).
 - Staging needs a US device and an active Ring Protection plan per test user. That's a real barrier for international teams and students.
 
-**Onboarding (zero to hello world):** `[[team]]` registration and staging-app experience, plus time to first `GET /v1/devices`.
+**Onboarding (zero to hello world):** Registering and creating a private app in the Ring Developer Portal was quick, and the credentials CSV download is convenient. But we could never reach a first `GET /v1/devices`: there's no device, and no documented way into the sandbox, so everything past account linking ran on our simulator.
 
 **Would we build with it again?** Yes. The doorbell is the one device that sees every delivery, and the API gives exactly the right primitives (events + frames). Speaker access would unlock a whole category of apps.
 
