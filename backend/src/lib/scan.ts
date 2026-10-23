@@ -8,7 +8,7 @@ export interface Scan {
   eventTimestamp: number
   createdAt: number
   simulated: boolean
-  status: 'processing' | 'done' | 'error'
+  status: 'processing' | 'done' | 'error' | 'ignored' // ignored = hands-free look with no label: nothing kept
   decision?: Decision
   label?: Pick<LabelRead, 'source' | 'confidence' | 'error'>
   barcodes?: BarcodeRead[]

@@ -79,7 +79,7 @@ export default function Sim() {
     p.getContext('2d')!.drawImage(c, 0, 0, p.width, p.height)
   }, [labels, labelId, distance, tilt, blur, source, upload, photos]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const press = async () => {
+  const press = async (trigger: 'motion' | 'button' = 'motion') => {
     setError(null); setScan(null)
     try {
       setStep('upload')
@@ -89,7 +89,7 @@ export default function Sim() {
       const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'content-type': 'image/jpeg' }, body: await toJpeg(c) })
       if (!put.ok) throw new Error(`Frame upload failed (${put.status})`)
       setStep('webhook')
-      const r = await api<{ status: string; scanId?: string }>('/sim/press', { method: 'POST', json: { timestamp } })
+      const r = await api<{ status: string; scanId?: string }>('/sim/press', { method: 'POST', json: { timestamp, trigger } })
       if (!r.scanId) throw new Error(`Webhook ${r.status}`)
       setStep('processing')
       for (let i = 0; i < 60; i++) {
@@ -113,7 +113,7 @@ export default function Sim() {
       <header>
         <div className="text-xs font-semibold uppercase tracking-widest text-accent">Doorbell Simulator</div>
         <h1 className="text-xl font-bold">Show a label to the doorbell</h1>
-        <p className="text-sm text-mute">Sends the same HMAC-signed <code>button_press</code> webhook as a Ring doorbell, through the same pipeline. Only the camera is simulated.</p>
+        <p className="text-sm text-mute">Sends the same HMAC-signed webhooks as a Ring doorbell (a package-motion event, or a bell press) through the same pipeline. Only the camera is simulated.</p>
       </header>
 
       <div className="grid grid-cols-3 rounded-xl border border-line bg-panel p-1 text-sm font-semibold">
@@ -161,10 +161,14 @@ export default function Sim() {
         </Card>
       )}
 
-      <Button onClick={press} disabled={busy} className="!py-4 text-lg">{busy ? 'Working…' : '🔔 Press the doorbell'}</Button>
+      <Button onClick={() => press('motion')} disabled={busy} className="!py-4 text-lg">{busy ? 'Working…' : '📦 Driver holds the label up (hands-free)'}</Button>
+      <div className="-mt-2 flex items-center justify-between text-xs text-mute">
+        <span>Sends Ring's <code>motion_detected</code> · <code>package_delivery</code> event: no button needed.</span>
+        <button disabled={busy} className="underline hover:text-white disabled:opacity-40" onClick={() => press('button')}>🔔 or press the doorbell</button>
+      </div>
 
       <ol className="grid grid-cols-4 gap-2 text-center text-[11px] text-mute">
-        {[['upload', 'Frame captured'], ['webhook', 'Signed webhook'], ['processing', 'Reading label'], ['done', 'Decision']].map(([k, t], i) => {
+        {[['upload', 'Frame captured'], ['webhook', 'Ring event'], ['processing', 'Reading label'], ['done', 'Decision']].map(([k, t], i) => {
           const order = ['upload', 'webhook', 'processing', 'done']
           const reached = step === 'error' ? false : order.indexOf(step) >= i
           return <li key={k} className={`rounded-lg border px-1 py-2 ${reached ? 'border-accent/50 text-accent' : 'border-line'}`}>{t}</li>

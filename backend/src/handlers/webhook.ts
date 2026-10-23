@@ -5,7 +5,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { verifySignature } from '../ring/signature.js'
 import { isScanTrigger, parseWebhook } from '../ring/webhook.js'
 import type { Scan } from '../lib/scan.js'
-import { audit, claimEvent, deleteRingTokens, homeIdForDevice, putScan } from '../lib/store.js'
+import { audit, claimEvent, deleteRingTokens, homeIdForDevice, listScans, putScan } from '../lib/store.js'
 
 const lambda = new LambdaClient({})
 const json = (statusCode: number, body: object): APIGatewayProxyResultV2 => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
@@ -30,6 +30,15 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   const deviceId = hook.data.attributes.source
   const homeId = await homeIdForDevice(deviceId)
   if (!homeId) return json(200, { status: 'unknown_device' })
+
+  // Hands-free: Ring sends motion events in bursts. One look at a time, and a short cooldown after a result
+  // (the driver walking over to the box shouldn't start another read). A doorbell press always goes through.
+  if (hook.data.type === 'motion_detected') {
+    const [last] = await listScans(homeId, 1)
+    const busy = last && last.status === 'processing' && Date.now() - last.createdAt < 30_000
+    const justDone = last && last.status === 'done' && Date.now() - last.createdAt < 8_000
+    if (busy || justDone) return json(200, { status: busy ? 'already_looking' : 'cooldown' })
+  }
 
   const scan: Scan = {
     scanId: crypto.randomUUID(),

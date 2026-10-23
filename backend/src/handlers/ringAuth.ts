@@ -56,7 +56,7 @@ function linkPage(nonce: string, time: string, error?: string): APIGatewayProxyR
       <b>DeliveryHub will:</b>
       <ul>
         <li>Receive doorbell-press and package-motion events from the devices you selected.</li>
-        <li>Read the <b>address and tracking number</b> on a package label shown to the doorbell. Never names, never faces.</li>
+        <li>Read the <b>address and tracking number</b> on a package label shown to the doorbell. Never names, never faces. Frames without a label are discarded.</li>
         <li>Keep doorbell photos as proof of delivery for <b>30 days</b>, then delete them automatically.</li>
         <li>Process frames with AWS (Amazon Textract, Amazon Bedrock). Your data is never sold or used for advertising.</li>
       </ul>

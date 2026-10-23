@@ -30,10 +30,13 @@ export default function Door() {
   const lid = async (action: string) => { await api('/box/lid', { method: 'POST', json: { action } }); reload() }
 
   const d = fresh?.decision
-  const view = !fresh ? 'idle' : fresh.status === 'processing' ? 'reading' : fresh.status === 'error' ? 'retry' : d!.verdict
+  const view = !fresh || fresh.status === 'ignored' ? 'idle'
+    : fresh.status === 'processing' ? (fresh.trigger === 'motion_detected' ? 'looking' : 'reading')
+    : fresh.status === 'error' ? 'retry' : d!.verdict
   const theme = {
     idle: { bg: 'from-slate-900 to-ink', icon: '🔔', title: 'Delivering a package?', color: 'text-white' },
     reading: { bg: 'from-teal-950 to-ink', icon: '⏳', title: 'Reading the label…', color: 'text-accent' },
+    looking: { bg: 'from-teal-950 to-ink', icon: '📦', title: 'Hold the label up to the camera', color: 'text-accent' },
     right_address: { bg: 'from-green-950 to-ink', icon: '✓', title: 'Right address', color: 'text-ok' },
     wrong_address: { bg: 'from-red-950 to-ink', icon: '✕', title: 'Wrong address', color: 'text-bad' },
     unreadable: { bg: 'from-amber-950 to-ink', icon: '↻', title: 'Please try again', color: 'text-warn' },
@@ -51,14 +54,15 @@ export default function Door() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-        <div key={view + (fresh?.scanId ?? '')} className={`animate-pop grid h-32 w-32 place-items-center rounded-full border-4 border-current text-6xl font-black ${theme.color} ${view === 'reading' ? 'pulse-ring' : ''}`}>
+        <div key={view + (fresh?.scanId ?? '')} className={`animate-pop grid h-32 w-32 place-items-center rounded-full border-4 border-current text-6xl font-black ${theme.color} ${view === 'reading' || view === 'looking' ? 'pulse-ring' : ''}`}>
           {theme.icon}
         </div>
         <h1 className={`text-4xl font-black tracking-tight sm:text-5xl ${theme.color}`}>{theme.title}</h1>
 
-        {view === 'idle' && <p className="max-w-sm text-lg text-slate-300">Hold the shipping label up to the doorbell camera, then press the bell.</p>}
+        {view === 'idle' && <p className="max-w-sm text-lg text-slate-300">Just hold the shipping label up to the doorbell camera. No need to press the bell.</p>}
+        {view === 'looking' && <p className="max-w-sm text-lg text-slate-200">Label facing the camera, about a hand's width away.</p>}
         {view === 'wrong_address' && <p className="max-w-md text-xl text-slate-100">{d!.driverMessage}</p>}
-        {(view === 'unreadable' || view === 'retry') && <p className="max-w-md text-lg text-slate-200">Hold the label closer to the camera (about 30 cm) and press the bell again.</p>}
+        {(view === 'unreadable' || view === 'retry') && <p className="max-w-md text-lg text-slate-200">Hold the label a little closer to the camera, about a hand's width away.</p>}
         {view === 'right_address' && (
           <div className="max-w-md space-y-3">
             {fresh?.instruction

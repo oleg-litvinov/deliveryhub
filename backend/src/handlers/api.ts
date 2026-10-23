@@ -94,7 +94,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       return res(200, { ok: true })
     }
     if (method === 'GET' && path === '/scans') {
-      const scans = await listScans(HOME, Number(event.queryStringParameters?.limit ?? 30))
+      const limit = Number(event.queryStringParameters?.limit ?? 30)
+      // Hands-free looks where nobody showed a label keep nothing and aren't shown.
+      const scans = (await listScans(HOME, limit * 2)).filter((s) => s.status !== 'ignored').slice(0, limit)
       return res(200, { scans: await Promise.all(scans.map(withMediaUrls)) })
     }
     if (method === 'POST' && path === '/demo/reset') { await reset(); return res(200, { ok: true }) }
@@ -115,7 +117,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     // ---- Door Display (driver-facing): latest scan for a door
     if (method === 'GET' && path === '/door/latest') {
-      const [scan] = await listScans(HOME, 1)
+      const scan = (await listScans(HOME, 3)).find((s) => s.status !== 'ignored')
       const box = await currentBox()
       return res(200, { scan: scan ? await withMediaUrls(scan) : null, box: publicBox(box), home: { line1: (await getHome(HOME))?.address.line1 } })
     }
@@ -157,7 +159,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     if (method === 'POST' && path === '/sim/press') {
       const timestamp = Number(body.timestamp)
       if (!timestamp || Math.abs(Date.now() - timestamp) > 300_000) return bad('timestamp missing or stale')
-      const hook = buildWebhook(SIM_DEVICE_ID, 'button_press', timestamp)
+      // 'motion' = hands-free (Ring's package_delivery motion event); default = doorbell press.
+      const hook = body.trigger === 'motion'
+        ? buildWebhook(SIM_DEVICE_ID, 'motion_detected', timestamp, 'package_delivery')
+        : buildWebhook(SIM_DEVICE_ID, 'button_press', timestamp)
       const raw = JSON.stringify(hook)
       // Post to our own public webhook so the event goes through signature check + dedupe like a real Ring event.
       const r = await fetch(`https://${event.requestContext.domainName}/ring/webhook`, {

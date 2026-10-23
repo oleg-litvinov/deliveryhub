@@ -18,7 +18,7 @@ export interface Decision {
 }
 export interface Scan {
   scanId: string; deviceId: string; trigger: string; createdAt: number; simulated: boolean
-  status: 'processing' | 'done' | 'error'; decision?: Decision
+  status: 'processing' | 'done' | 'error' | 'ignored'; decision?: Decision
   label?: { source: 'bedrock' | 'textract' | 'none'; confidence: number; error?: string }
   barcodes?: { text: string; format: string }[]
   instruction?: string; spokenText?: string; snapshotUrl?: string; audioUrl?: string

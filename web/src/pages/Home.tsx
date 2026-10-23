@@ -173,7 +173,7 @@ function Settings({ home, onChange }: { home: HomeT; onChange: () => void }) {
       </Card>
       <Card className="space-y-2 text-sm text-slate-300">
         <div className="font-semibold text-white">Privacy</div>
-        <p>A scan starts only when the driver shows the label and presses the bell. DeliveryHub reads the address and tracking number with AI, never the recipient's name, and does no face recognition. Photos are deleted after 30 days.</p>
+        <p>DeliveryHub only acts when a driver shows a package label to the doorbell, hands-free or with a press of the bell. It reads the address and tracking number, never the recipient's name, and does no face recognition. Frames without a label are discarded and never stored. Delivery photos are deleted after 30 days.</p>
       </Card>
       <DeleteData onChange={onChange} />
       <Button kind="ghost" onClick={async () => { await api('/demo/reset', { method: 'POST' }); onChange() }}>Reset demo data</Button>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decide, pickInstruction } from '../src/core/decide.js'
+import { decide, isQuietMiss, pickInstruction } from '../src/core/decide.js'
 import { findPackage, zipFromBarcode } from '../src/core/tracking.js'
 import type { Home, Package } from '../src/core/types.js'
 
@@ -62,5 +62,20 @@ describe('decide', () => {
   it('package instruction beats the default', () => {
     expect(pickInstruction(home, meds)).toContain('cooler')
     expect(pickInstruction(home, ups)).toBe('Leave it by the door')
+  })
+})
+
+describe('hands-free (motion) looks', () => {
+  const none = { source: 'textract' as const, confidence: 0 }
+  it('stay silent when nobody shows a label', () => {
+    expect(isQuietMiss('motion_detected', [], none)).toBe(true)
+  })
+  it('answer when a barcode, address or tracking number is seen', () => {
+    expect(isQuietMiss('motion_detected', [{ text: '1Z999AA10123456784', format: 'Code128' }], none)).toBe(false)
+    expect(isQuietMiss('motion_detected', [], { ...none, address: { line1: '123 Maple St' } })).toBe(false)
+    expect(isQuietMiss('motion_detected', [], { ...none, trackingNumber: 'TBA304918275000' })).toBe(false)
+  })
+  it('always answer a doorbell press', () => {
+    expect(isQuietMiss('button_press', [], none)).toBe(false)
   })
 })

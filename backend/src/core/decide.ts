@@ -57,11 +57,21 @@ export function decide(input: {
     ...base,
     verdict: 'unreadable',
     confidence: label.confidence,
-    driverMessage: 'Sorry, I could not read the label. Please hold it closer to the camera and press the doorbell again.',
+    driverMessage: 'Sorry, I could not read the label. Please hold it a little closer to the camera.',
   }
 }
 
 /** Package-specific instruction wins, then the home default. */
 export function pickInstruction(home: Home, pkg?: Package): string | undefined {
   return pkg?.instruction?.trim() || home.defaultInstruction?.trim() || undefined
+}
+
+/**
+ * Hands-free mode: a person/package motion event starts a look, but most people at a door aren't
+ * holding a label up (neighbours, guests, a driver walking back). If nothing label-like was seen,
+ * the look ends silently: no voice, no stored frame, and no change to the Delivery Box.
+ */
+export function isQuietMiss(trigger: 'button_press' | 'motion_detected', barcodes: BarcodeRead[], label: LabelRead): boolean {
+  if (trigger === 'button_press') return false // someone deliberately rang: always answer
+  return barcodes.length === 0 && !label.address && !label.trackingNumber
 }
