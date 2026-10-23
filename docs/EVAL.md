@@ -50,6 +50,20 @@ All 6 retries happened at ≈ 14 cm **with** 10° tilt **and** blur.
 3. **Failure mode is a retry, never a wrong answer.** Every miss asks the driver to try again.
 4. **Fast enough for the doorstep:** under 2.5 s at p90 from press to decision, including Ring-style frame retrieval, barcode decoding, OCR, matching, DynamoDB and S3 writes.
 
+## Follow-up: 2D codes survive where 1D barcodes don't
+
+After adding an Amazon-style label with a **QR code** (the third expected package), we pushed it through the same simulated optics and our Lambda's zxing-wasm decoder:
+
+| Condition | Code128 (eval above) | QR code |
+|---|---|---|
+| ≈ 9 cm, 4° tilt, sharp | decodes | ✅ decodes |
+| ≈ 12 cm, 4° tilt, sharp | 17% | ✅ decodes |
+| ≈ 14 cm, 10° tilt, sharp | 0% | ✅ decodes |
+| ≈ 9 cm, 10° tilt, 2 px blur | 0% | ✅ decodes |
+| ≈ 14 cm, 10° tilt, 2 px blur | 0% | ✅ decodes |
+
+(5 spot checks, run locally, not a full 120-case run.) The takeaway for the product: on a wide-angle doorbell, the **2D code** (QR, DataMatrix or MaxiCode, which most carrier labels already print) is the reliable machine-readable signal. That makes the barcode-required rule for unlocking the Delivery Box realistic at normal holding distances.
+
 ## COE: "right house" packages announced as "wrong house"
 
 **Impact.** In the first run, 4 of 120 presses (3%) told the driver a correct package belonged to another house. All 4 were at ≈ 14 cm with 10° tilt and blur. No neighbor's package was ever accepted.
