@@ -111,6 +111,10 @@ Paste each entry from [`FRICTION_LOG.md`](FRICTION_LOG.md). Each one already has
 5. Snapshot timing for event-driven apps is undocumented: existing frames only, ±10 s (Medium)
 6. Amazon Polly neural voices are unavailable in us-east-2 (Medium)
 7. The Bedrock tokens-per-day quota is applied at 0 and not adjustable; a paid upgrade and a support case didn't fix it before the deadline (High)
+8. No way to tell whether a device sends classified motion (Smart Alerts) (Medium)
+9. Account Link sign-in requirement not mentioned in the configure flow (Medium)
+10. Ring Appstore Knowledge MCP: noisy search and a missing page (Low)
+11. AWS CLI sign-in sessions expire mid-work (Low–Medium)
 
 ---
 

@@ -66,3 +66,39 @@ Each entry: Task · Steps · Expected vs actual · Severity · Workaround · Sug
   - When an applied quota is 0, return a distinct error (e.g. `AccessDeniedException: daily token quota for this model is 0 on this account`) with a link to fix it.
   - Show "Bedrock quota 0" as an onboarding blocker in the console and in AWS Settings for new projects.
   - Make the value adjustable, or let the paid-plan upgrade reset it to the default.
+
+## 8. No way to tell whether a device sends classified motion (Smart Alerts)
+- **Task:** Start the label check hands-free when a driver steps up (their hands are full; they can't press the bell).
+- **Steps:** Subscribed to `motion_detected` and planned to act on `sub_type: package_delivery` / `human`.
+- **Expected:** A capability or configuration field telling the app whether this device emits classified motion.
+- **Actual:** Without Smart Alerts every event is plain `motion`, and the docs state that no API reveals whether Smart Alerts are enabled.
+- **Severity:** Medium. An app can't detect the case or explain to the homeowner why hands-free isn't working.
+- **Workaround:** Act on `package_delivery` / `human`; keep the bell press as a fallback.
+- **Suggestion:** Expose Smart Alerts status in `capabilities` or `configurations`, and document which devices and plans produce each `sub_type`.
+
+## 9. The mandatory sign-in on the Account Link page isn't mentioned in the configure flow
+- **Task:** Implement one-way account linking for a private app.
+- **Steps:** Followed Configure → Account Linking (Token Exchange URL + Account Link URL), then read the architecture doc.
+- **Expected:** The configure page states everything the endpoints must do.
+- **Actual:** Only the architecture page (§6.3) says the Account Link page *must* show a sign-in form, that certification checks it, and that a POST then a PATCH to `app-integrations` are both required. An app that only auto-verifies the nonce fails certification.
+- **Severity:** Medium.
+- **Workaround:** Added a sign-in + consent page to our Account Link URL.
+- **Suggestion:** Put a "required behaviour" checklist next to each URL field in the portal.
+
+## 10. Ring Appstore Knowledge MCP: noisy search and a missing page
+- **Task:** Look up Ring API details from our coding agent through the docs MCP.
+- **Steps:** `search_docs` with natural-language queries; `get_doc("dev_portal/test.md")`.
+- **Expected:** Developer-doc results, and the testing guide.
+- **Actual:** Many results were ring.com product spec pages; several reasonable queries returned nothing until we rephrased them as page titles; `get_doc` on the testing guide returned "Error retrieving document".
+- **Severity:** Low (the MCP was still our most useful docs source).
+- **Workaround:** Short title-style queries, then `get_doc` on the returned sources.
+- **Suggestion:** A `source: developer-docs` filter; fix the testing-guide page.
+
+## 11. AWS CLI sign-in sessions expire mid-work
+- **Task:** Deploy repeatedly with AWS SAM during the final hackathon days.
+- **Steps:** Signed in with `aws login`, worked for several hours, ran `sam deploy`.
+- **Expected:** A session long enough for a working day, or silent refresh.
+- **Actual:** Sessions expired several times mid-task (`Your session has expired… aws login`), blocking deploys until a person repeated the browser sign-in.
+- **Severity:** Low–Medium (a real interruption when an agent or CI does the deploying).
+- **Workaround:** Re-ran `aws login` whenever a deploy failed.
+- **Suggestion:** A configurable session length for developer projects, or a refresh token for CLI sessions.
