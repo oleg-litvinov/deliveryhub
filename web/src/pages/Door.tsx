@@ -34,9 +34,9 @@ export default function Door() {
     : fresh.status === 'processing' ? (fresh.trigger === 'motion_detected' ? 'looking' : 'reading')
     : fresh.status === 'error' ? 'retry' : d!.verdict
   const theme = {
-    idle: { bg: 'from-slate-900 to-ink', icon: '🔔', title: 'Delivering a package?', color: 'text-white' },
+    idle: { bg: 'from-slate-900 to-ink', icon: '📦', title: 'Delivering a package?', color: 'text-white' },
     reading: { bg: 'from-teal-950 to-ink', icon: '⏳', title: 'Reading the label…', color: 'text-accent' },
-    looking: { bg: 'from-teal-950 to-ink', icon: '📦', title: 'Hold the label up to the camera', color: 'text-accent' },
+    looking: { bg: 'from-teal-950 to-ink', icon: '🔍', title: 'Hold the label up to the camera', color: 'text-accent' },
     right_address: { bg: 'from-green-950 to-ink', icon: '✓', title: 'Right address', color: 'text-ok' },
     wrong_address: { bg: 'from-red-950 to-ink', icon: '✕', title: 'Wrong address', color: 'text-bad' },
     unreadable: { bg: 'from-amber-950 to-ink', icon: '↻', title: 'Please try again', color: 'text-warn' },

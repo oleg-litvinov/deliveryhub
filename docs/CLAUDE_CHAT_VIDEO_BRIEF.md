@@ -13,7 +13,7 @@ You are producing a **short concept video (36–38 seconds, 16:9)** with the Hig
 
 ## The idea (what the video must communicate)
 
-**DeliveryHub for Ring** is an app for Ring video doorbells. Today Ring knows that *a* package is at the door, but not *which* one, or whether it was even meant for this house. With DeliveryHub, the delivery driver holds the shipping label up to the doorbell camera and presses the bell. Within about 2 seconds the system reads the label and:
+**DeliveryHub for Ring** is an app for Ring video doorbells. Today Ring knows that *a* package is at the door, but not *which* one, or whether it was even meant for this house. With DeliveryHub, the delivery driver just holds the shipping label up to the doorbell camera, hands-free (no button: his hands are full). Within a few seconds the system reads the label and:
 - **Right house, expected package:** a small screen by the door turns green and speaks the homeowner's instruction for that package ("This is medication, please put it in the cooler box"). A lockable **Delivery Box** next to the door unlocks for 60 seconds. The driver puts the parcel in and closes the lid, and the box locks. The homeowner's app shows "Package secured" with a photo.
 - **Wrong house:** the screen turns red ("Wait, this package is for 42 Oak St"). The box stays locked, and the driver takes the parcel next door.
 - **Thief:** someone pulls the box lid without a verified delivery. It stays shut, its light flashes red, and the homeowner gets an alert.
@@ -62,7 +62,7 @@ Show me R1–R3 and wait for my OK. Regenerate any I reject.
 | Shot | Attach | Prompt (STYLE + needed CAST + this) |
 |---|---|---|
 | F1 | R1 | `The same porch as the reference, but overcast and raining; a soggy cardboard parcel sits on the bottom step; wet boards and puddles; no people.` |
-| F2 | R1, R2 | `Close-up: the DRIVER's hand holds a white shipping label about 10 cm in front of the DOORBELL's camera lens; his other index finger is about to press the glowing button; navy door behind.` |
+| F2 | R1, R2 | `Close-up: the DRIVER holds a cardboard parcel with both hands, its white shipping label about 10 cm in front of the DOORBELL's camera lens; navy door behind.` |
 | F3 | R1, R2, R3 | `The DRIVER on the porch lifting the hinged lid of the BOX with one hand, holding a small cardboard parcel with a blue sticker in the other; the box status light glows teal.` |
 | F4 | R1, R2, R3 | `The DRIVER on the porch reading a parcel label with a slightly puzzled expression; the BOX beside him with its status light white; the neighbouring house visible across the lawn.` |
 | F5 | R1, R3 | `Evening on the same porch, warm porch light on, a person in a dark hoodie with their face hidden pulling at the closed lid of the BOX; the status light glows red; high security-camera angle from above the door.` |
@@ -77,7 +77,7 @@ For generated shots, use the start frame as `start_image` and attach the same re
 | Clip | start_image | refs | Motion prompt |
 |---|---|---|---|
 | V1 | F1 | R1 | `Steady rain falls on the porch and the soaked parcel; slow gentle push-in toward the parcel; nothing else moves.` |
-| V2 | F2 | R1, R2 | `The hand holds the label steady in front of the camera lens, then the index finger presses the doorbell button and the button glows brighter. Static close-up.` |
+| V2 | F2 | R1, R2 | `The driver holds the parcel with both hands, label steady in front of the camera lens; the doorbell's ring light glows softly as it reads the label. Static close-up.` |
 | V3 | **attached screenshot `2-door-right-address.png`** | none | `Subtle slow push-in on this screen; the green check mark gently pulses once. Keep all text and UI exactly as in the image, do not add or change any text.` |
 | V4 | F3 | R1, R2, R3 | `He lowers the parcel into the box and closes the lid; the status light on the box changes from teal to green. Static medium shot.` |
 | V5 | **attached screenshot `3-door-wrong-address.png`** | none | `Subtle slow push-in on this screen; the red X gently pulses once. Keep all text and UI exactly as in the image, do not add or change any text.` |
@@ -95,7 +95,7 @@ Give me a table with **every final asset URL** (R1–R3, F1–F6, V1–V7) and i
 | Time | Asset | Caption | Sound (added later) |
 |---|---|---|---|
 | 0:00–0:04 | V1 | "Ring knows *a* package is here. Not *which* one." | rain |
-| 0:04–0:08 | V2 | "Show the label. Press the bell." | doorbell chime |
+| 0:04–0:08 | V2 | "Just hold the label up. Hands-free." | soft chime |
 | 0:08–0:12 | V3 | "✓ Right house: your instruction, spoken" | real app voice: "…This is medication. Please put it in the cooler box." |
 | 0:12–0:17 | V4 | "Box unlocks → parcel in → box locks" · tag "Concept" | lock click |
 | 0:17–0:20 | screenshot `4-homeowner-feed.png` (still, slow zoom in the edit) | "Package secured, with photo proof" | soft ping |

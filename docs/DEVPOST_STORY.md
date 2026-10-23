@@ -59,7 +59,7 @@ Other friction: there's no doorbell-speaker API (we built the Door Display), no 
 
 ## Accomplishments we're proud of
 
-- **120-press live eval** (real signed webhooks through the deployed stack, simulated optics): **95% correct, 5% "please hold it closer", 0 wrong decisions, 0 false confirmations**. Press → decision in **1.9 s p50 / 2.4 s p90**. [Details](https://github.com/oleg-litvinov/deliveryhub/blob/main/docs/EVAL.md), and anyone can rerun it at https://dgnb2hmunowzj.cloudfront.net/eval.
+- **120-press live eval** (real signed webhooks through the deployed stack, simulated optics; run with bell-press events, while hands-free motion events use the same reading pipeline): **95% correct, 5% "please hold it closer", 0 wrong decisions, 0 false confirmations**. Press → decision in **1.9 s p50 / 2.4 s p90**. [Details](https://github.com/oleg-litvinov/deliveryhub/blob/main/docs/EVAL.md), and anyone can rerun it at https://dgnb2hmunowzj.cloudfront.net/eval.
 - **100% correct out to ≈ 12 cm** from the lens, even with tilt and motion blur.
 
 - **Zero false confirmations:** a neighbor's package has never been confirmed as ours in any eval run.

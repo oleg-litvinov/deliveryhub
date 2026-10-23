@@ -261,7 +261,7 @@ Resources:
       DashboardName: !Sub ${AWS::StackName}-scans
       DashboardBody: !Sub |
         {"widgets":[
-          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Scan latency (press → decision)","region":"${AWS::Region}","stat":"p50","period":300,
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Scan latency (Ring event → decision)","region":"${AWS::Region}","stat":"p50","period":300,
             "metrics":[["DeliveryHub","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}},
           {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"Scans by verdict","region":"${AWS::Region}","stat":"SampleCount","period":300,
             "metrics":[["DeliveryHub","ScanLatencyMs","Verdict","right_address"],["...","wrong_address"],["...","unreadable"]]}}

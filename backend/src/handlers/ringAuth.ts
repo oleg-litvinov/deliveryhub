@@ -102,7 +102,7 @@ async function linkSubmit(event: APIGatewayProxyEventV2): Promise<APIGatewayProx
   return html(200, `
     <h1>✓ Connected</h1>
     <p>DeliveryHub is now linked to your Ring account (${devices.length} device${devices.length === 1 ? '' : 's'}).</p>
-    <p class="mute">Next time a driver shows a label to your doorbell and presses the bell, DeliveryHub will check it.</p>
+    <p class="mute">Next time a driver holds a label up to your doorbell, DeliveryHub will check it. No button needed.</p>
     <a class="btn" href="/home">Open DeliveryHub</a>`)
 }
 

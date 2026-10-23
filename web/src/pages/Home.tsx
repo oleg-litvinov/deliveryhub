@@ -85,7 +85,7 @@ function BoxCard({ box, pkgs, onChange }: { box: Box; pkgs: Package[]; onChange:
 }
 
 function Activity({ scans, pkgById, home }: { scans: Scan[]; pkgById: Map<string, Package>; home: HomeT }) {
-  if (!scans.length) return <Card className="text-center text-sm text-mute">No deliveries yet. Open the Doorbell Simulator and press the bell.</Card>
+  if (!scans.length) return <Card className="text-center text-sm text-mute">No deliveries yet. Open the Doorbell Simulator and hold a label up to the doorbell.</Card>
   return (
     <div className="space-y-3">
       {scans.map((s) => {
@@ -99,7 +99,7 @@ function Activity({ scans, pkgById, home }: { scans: Scan[]; pkgById: Map<string
                 : <div className="grid h-20 w-32 place-items-center rounded-lg bg-black/30 text-xs text-mute">{s.status === 'processing' ? '…' : 'no photo'}</div>}
               <div className="min-w-0 flex-1 space-y-1">
                 <ScanBadge scan={s} />
-                <div className="truncate font-semibold">{pkg?.nickname ?? (!d ? 'Doorbell press' : d.verdict === 'wrong_address' ? 'Not for this house' : d.verdict === 'unreadable' ? 'Label not readable' : d.expected ? 'Package' : 'Unexpected package')}</div>
+                <div className="truncate font-semibold">{pkg?.nickname ?? (!d ? 'Doorbell event' : d.verdict === 'wrong_address' ? 'Not for this house' : d.verdict === 'unreadable' ? 'Label not readable' : d.expected ? 'Package' : 'Unexpected package')}</div>
                 <div className="text-xs text-mute">{timeAgo(s.createdAt)}{s.simulated ? ' · simulator' : ''}{s.latencyMs ? ` · ${(s.latencyMs / 1000).toFixed(1)} s` : ''}</div>
               </div>
             </div>

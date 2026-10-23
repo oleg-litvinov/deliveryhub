@@ -23,8 +23,8 @@
   <text x="32" y="112" class="h">AT THE DOOR</text>
   <rect class="ring" x="32" y="124" width="220" height="92" rx="12"/>
   <text x="48" y="152" class="t">Ring video doorbell</text>
-  <text x="48" y="172" class="s">Driver shows label + presses bell</text>
-  <text x="48" y="190" class="s">button_press · package motion</text>
+  <text x="48" y="172" class="s">Driver holds label up, hands-free</text>
+  <text x="48" y="190" class="s">package motion · button_press</text>
   <rect class="us" x="32" y="234" width="220" height="70" rx="12"/>
   <text x="48" y="262" class="t">Doorbell Simulator</text>
   <text x="48" y="280" class="s">Same signed webhook,</text>

@@ -9,7 +9,7 @@ type Source = 'label' | 'webcam' | 'upload'
 
 const norm = (t: string) => t.toUpperCase().replace(/[^0-9A-Z]/g, '')
 
-/** What pressing the bell with this label will do right now, given the homeowner's live package list. */
+/** What showing this label to the doorbell will do right now, given the homeowner's live package list. */
 function labelOutcome(l: SampleLabel, packages: Package[] | undefined): { text: string; cls: string } {
   if (l.kind === 'wrong_house') return { text: 'Wrong house · box stays locked', cls: 'bg-bad/15 text-bad' }
   const pkg = packages?.find((p) => norm(l.barcode).includes(norm(p.trackingNumber)))

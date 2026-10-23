@@ -92,7 +92,7 @@ export default function Eval() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat k="Correct decision" v={pct(correct, rows.length)} />
             <Stat k="Wrong decision" v={`${wrong}`} sub="right↔wrong house swaps" />
-            <Stat k="Latency p50" v={`${(quantile(server, 0.5) / 1000).toFixed(1)} s`} sub="press → decision" />
+            <Stat k="Latency p50" v={`${(quantile(server, 0.5) / 1000).toFixed(1)} s`} sub="Ring event → decision" />
             <Stat k="Latency p90" v={`${(quantile(server, 0.9) / 1000).toFixed(1)} s`} />
           </div>
           {(['cm', 'blur', 'tilt', 'label'] as const).map((k) => (
