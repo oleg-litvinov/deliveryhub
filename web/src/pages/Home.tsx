@@ -41,7 +41,7 @@ export default function Home() {
           : <Banner tone="warn" title="Unexpected package delivered" body={`Not on your expected list${alert.decision!.trackingNumber ? ` (tracking ${alert.decision!.trackingNumber})` : ''}. ${timeAgo(alert.createdAt)}.`} />
       )}
 
-      <BoxCard box={box} pkg={box.packageId ? pkgById.get(box.packageId) : undefined} onChange={reload} />
+      <BoxCard box={box} pkgs={(box.packageIds?.length ? box.packageIds : box.packageId ? [box.packageId] : []).flatMap((id) => pkgById.get(id) ?? [])} onChange={reload} />
 
       <nav className="grid grid-cols-3 rounded-xl border border-line bg-panel p-1 text-sm font-semibold">
         {(['activity', 'packages', 'settings'] as Tab[]).map((t) => (
@@ -65,7 +65,7 @@ function Banner({ tone, title, body }: { tone: 'bad' | 'warn'; title: string; bo
   )
 }
 
-function BoxCard({ box, pkg, onChange }: { box: Box; pkg?: Package; onChange: () => void }) {
+function BoxCard({ box, pkgs, onChange }: { box: Box; pkgs: Package[]; onChange: () => void }) {
   const [busy, setBusy] = useState(false)
   const act = async (fn: () => Promise<unknown>) => { setBusy(true); try { await fn() } finally { setBusy(false); onChange() } }
   return (
@@ -74,7 +74,7 @@ function BoxCard({ box, pkg, onChange }: { box: Box; pkg?: Package; onChange: ()
       <div className="flex-1">
         <div className="text-xs uppercase tracking-wider text-mute">Delivery Box <span className="normal-case">(concept)</span></div>
         <BoxStatus state={box.state} />
-        {pkg && (box.state === 'SECURED' || box.state === 'UNLOCKED') && <div className="text-xs text-slate-400">{pkg.nickname}</div>}
+        {pkgs.length > 0 && (box.state === 'SECURED' || box.state === 'UNLOCKED') && <div className="text-xs text-slate-400">{pkgs.map((p) => p.nickname).join(' · ')}</div>}
       </div>
       <div className="flex flex-col gap-2">
         {(box.state === 'LOCKED' || box.state === 'SECURED') && <Button kind="ghost" disabled={busy} onClick={() => act(() => api('/box/unlock', { method: 'POST' }))}>Remote unlock</Button>}

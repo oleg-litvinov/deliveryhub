@@ -73,7 +73,8 @@ export interface Box {
   state: BoxState
   token?: string
   tokenExpiresAt?: number
-  packageId?: string
+  packageId?: string // latest verified parcel
+  packageIds?: string[] // every parcel verified during this unlock window (a driver may bring several)
   unlockHistory: number[] // epoch ms of recent unlocks, for rate limiting
   updatedAt: number
 }

@@ -43,6 +43,7 @@ export function transition(box: Box, ev: BoxEvent): Box {
         token: ev.token,
         tokenExpiresAt: ev.now + UNLOCK_TTL_MS,
         packageId: ev.packageId,
+        packageIds: [...new Set([...(box.state === 'UNLOCKED' ? (box.packageIds ?? []) : []), ...(ev.packageId ? [ev.packageId] : [])])],
         unlockHistory: [...box.unlockHistory.filter((t) => ev.now - t < 3_600_000), ev.now],
       }
     case 'lid_open': {
@@ -55,10 +56,10 @@ export function transition(box: Box, ev: BoxEvent): Box {
       return box
     case 'relock':
       if (box.state !== 'UNLOCKED') return box
-      return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined }
+      return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined, packageIds: undefined }
     case 'tick':
       if (box.state === 'UNLOCKED' && ev.now > (box.tokenExpiresAt ?? 0)) {
-        return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined }
+        return { ...next, state: 'LOCKED', token: undefined, tokenExpiresAt: undefined, packageId: undefined, packageIds: undefined }
       }
       return box
   }

@@ -21,7 +21,7 @@ export function demoPackages(now: number): Package[] {
   return [
     p('meds', '9400111899223344556677', "Mom's medication", 'USPS', 'CVS Pharmacy', 'This is medication. Please put it in the cooler box by the door.'),
     p('shoes', '1Z999AA10123456784', 'Running shoes', 'UPS', 'Zappos'),
-    p('books', 'TBA304918275000', 'Kids books', 'Amazon', 'Amazon', 'Please ring the bell, someone is home.'),
+    p('books', 'TBA304918275000', 'Kids books', 'Amazon', 'Amazon', 'These are books. Please keep them dry.'),
   ]
 }
 

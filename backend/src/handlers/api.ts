@@ -138,7 +138,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       else if (body.action === 'force') next = transition(box, { type: 'lid_open', now })
       else if (body.action === 'close') {
         next = transition(box, { type: 'lid_close', now })
-        if (next.state === 'SECURED' && box.packageId) await markPackage(HOME, box.packageId, 'secured_in_box').catch(() => undefined)
+        if (next.state === 'SECURED') {
+          const ids = box.packageIds?.length ? box.packageIds : box.packageId ? [box.packageId] : []
+          await Promise.all(ids.map((id) => markPackage(HOME, id, 'secured_in_box').catch(() => undefined)))
+        }
       } else if (body.action === 'reset') next = { ...newBox(HOME, now), unlockHistory: box.unlockHistory }
       else return bad('action must be open | close | force | reset')
       await putBox(next)

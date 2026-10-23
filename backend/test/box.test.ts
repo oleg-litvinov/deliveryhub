@@ -27,7 +27,9 @@ describe('unlockPolicy (fails closed)', () => {
     expect(unlockPolicy(ok, first, t0 + 20_000).allow).toBe(true)
     const second = transition(first, { type: 'unlock', token: 'two', packageId: 'b', now: t0 + 20_000 })
     expect(second).toMatchObject({ state: 'UNLOCKED', token: 'two', packageId: 'b', tokenExpiresAt: t0 + 20_000 + 60_000 })
+    expect(second.packageIds).toEqual(['a', 'b'])
     expect(transition(second, { type: 'lid_open', token: 'one', now: t0 + 21_000 }).state).toBe('TAMPER') // old token is dead
+    expect(transition(second, { type: 'relock', now: t0 + 22_000 }).packageIds).toBeUndefined()
   })
   it('rate-limits unlocks', () => {
     const box = { ...newBox('h', t0), unlockHistory: Array(MAX_UNLOCKS_PER_HOUR).fill(t0 - 1000) }
@@ -36,6 +38,10 @@ describe('unlockPolicy (fails closed)', () => {
 })
 
 describe('box state machine', () => {
+  it('a fresh unlock after SECURED starts a new parcel list', () => {
+    const secured = { ...newBox('h', t0), state: 'SECURED' as const, packageIds: ['old'] }
+    expect(transition(secured, { type: 'unlock', token: 't', packageId: 'new', now: t0 }).packageIds).toEqual(['new'])
+  })
   it('unlock → open → close → secured', () => {
     let b = transition(newBox('h', t0), { type: 'unlock', token: 'abc', packageId: 'p', now: t0 })
     expect(b.state).toBe('UNLOCKED')

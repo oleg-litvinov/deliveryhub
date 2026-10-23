@@ -8,7 +8,7 @@ export interface Package {
   instruction?: string; status: PackageStatus; createdAt: number; deliveredAt?: number; scanId?: string
 }
 export type BoxState = 'LOCKED' | 'UNLOCKED' | 'OPEN' | 'SECURED' | 'TAMPER'
-export interface Box { state: BoxState; packageId?: string; unlockedUntil?: number; updatedAt: number }
+export interface Box { state: BoxState; packageId?: string; packageIds?: string[]; unlockedUntil?: number; updatedAt: number }
 export type Verdict = 'right_address' | 'wrong_address' | 'unreadable'
 export interface Decision {
   verdict: Verdict; expected: boolean; packageId?: string; trackingNumber?: string
