@@ -40,6 +40,19 @@ Ring doorbell ─ package-motion / button_press webhook (HMAC-signed) ─► API
 Door Display (driver)  ◄─ poll ─ CloudFront ─► homeowner app (feed, photo proof, alerts, remote box unlock)
 ```
 
+## The Delivery Box (concept)
+
+A lockable, weatherproof parcel box next to the front door, in view of the Ring doorbell. Packages wait **inside, locked**: out of the rain and sun, and out of reach of porch thieves. They don't sit on the step until someone gets home.
+
+- **Opens only for recognized packages.** When the driver holds up a label, DeliveryHub must confirm the right house **and** match the tracking number from the barcode to a package the homeowner is expecting. Then the box unlocks for 60 seconds with a single-use token. The driver drops the parcel in, closes the lid, and it locks again. The homeowner sees **"Secured in box"** with the doorbell photo.
+- **Several parcels at once.** Each verified parcel restarts the unlock window, and closing the lid secures them all.
+- **Stays locked for everything else:** a neighbor's package, an unexpected one, an unreadable label, or a tracking number that only an AI model read with no barcode to confirm it. A new unverified scan also re-locks a box that is still open for a previous driver.
+- **Remote unlock when you decide.** For an unexpected gift, a parcel without a label, or a neighbor dropping something off, the homeowner taps **Remote unlock** in the app. A person always approves the exceptions.
+- **Tamper alert.** If the lid is forced open without a valid unlock, the box goes to `TAMPER` and the homeowner gets an alert with the doorbell snapshot.
+- **Fails closed.** If the network or the cloud is down, the box stays locked, and the owner can still open it with a local PIN or key.
+
+In this repo the box is **simulated**: the unlock policy and state machine are real, unit-tested code (`backend/src/core/box.ts`), and a virtual box runs on the Door Display and in the homeowner app. The production design (AWS IoT Core device shadow, an X.509 certificate per box, Amazon Sidewalk connectivity) is in [docs/DELIVERY_BOX.md](docs/DELIVERY_BOX.md).
+
 ## Repo layout
 
 | Path | What |
