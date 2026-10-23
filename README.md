@@ -49,7 +49,7 @@ Door Display (driver)  ◄─ poll ─ CloudFront ─► homeowner app (feed, ph
 | `backend/src/handlers` | Lambda handlers: `webhook`, `worker`, `api` |
 | `infra/template.yaml` | AWS SAM: HTTP API, Lambdas, DynamoDB, S3, CloudFront, CloudWatch dashboard |
 | `web/` | Demo console (`/`), homeowner app (`/home`), Door Display (`/door`), Doorbell Simulator (`/sim`), live eval (`/eval`) |
-| `docs/` | [Submission pack](docs/SUBMISSION.md) · [Concept video script](docs/CONCEPT_VIDEO_SCRIPT.md) · [Eval results](docs/EVAL.md) · [Delivery Box design](docs/DELIVERY_BOX.md) · [PR-FAQ](docs/PR-FAQ.md) · [Friction log](docs/FRICTION_LOG.md) · [Product feedback](docs/PRODUCT_FEEDBACK.md) |
+| `docs/` | [Submission pack](docs/SUBMISSION.md) · [Concept video script](docs/CONCEPT_VIDEO_SCRIPT.md) · [Higgsfield guide](docs/HIGGSFIELD_GUIDE.md) · [Eval results](docs/EVAL.md) · [Delivery Box design](docs/DELIVERY_BOX.md) · [PR-FAQ](docs/PR-FAQ.md) · [Friction log](docs/FRICTION_LOG.md) · [Product feedback](docs/PRODUCT_FEEDBACK.md) |
 
 ## Run the tests
 
