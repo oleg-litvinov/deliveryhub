@@ -33,7 +33,7 @@ The box unlocks only if **all** of these hold:
 | 2 | The package is on the homeowner's **expected** list | Unknown packages need a human |
 | 3 | The tracking number came from the **barcode** | An AI misread can't open a lock |
 | 4 | The address didn't mismatch, and confidence ≥ 0.85 | Uncertainty fails closed |
-| 5 | The box is `LOCKED` or `SECURED` | No double unlocks |
+| 5 | The box isn't `OPEN` or in `TAMPER` | A second verified parcel while it's `UNLOCKED` restarts the 60 s window with a fresh token, and the old token stops working |
 | 6 | Fewer than 3 unlocks in the last hour | Limits abuse with replayed labels |
 
 ## State machine

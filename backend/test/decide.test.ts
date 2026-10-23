@@ -29,6 +29,11 @@ describe('decide', () => {
     expect(d).toMatchObject({ verdict: 'right_address', expected: true, packageId: 'shoes', trackingSource: 'barcode' })
     expect(d.confidence).toBeGreaterThan(0.95)
   })
+  it('Amazon QR label finds the expected package by barcode', () => {
+    const books = pkg('books', 'TBA304918275000')
+    const d = decide({ home, expected: [books], barcodes: [{ text: 'TBA304918275000', format: 'QRCode' }], label: label('123 Maple St') })
+    expect(d).toMatchObject({ verdict: 'right_address', expected: true, packageId: 'books', trackingSource: 'barcode' })
+  })
   it('wrong address wins even if tracking matches', () => {
     const d = decide({ home, expected: [ups], barcodes: [{ text: '1Z999AA10123456784', format: 'Code128' }], label: label('42 Oak St') })
     expect(d.verdict).toBe('wrong_address')

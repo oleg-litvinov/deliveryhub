@@ -37,14 +37,21 @@ export function renderLabel(s: SampleLabel): HTMLCanvasElement {
   s.to.forEach((t, i) => g.fillText(t, 28, 358 + i * 50))
   g.fillRect(6, 470, 588, 4)
 
-  // Render at the largest whole-pixel module width that fits, so bars are never resampled.
+  // Render at the largest whole-pixel module size that fits, so bars/modules are never resampled.
   const bc = document.createElement('canvas')
-  const opts = { bcid: 'code128', text: s.barcode, height: 22, includetext: false, backgroundcolor: 'FFFFFF' }
-  bwipjs.toCanvas(bc, { ...opts, scale: 1 })
-  const scale = Math.max(1, Math.floor(560 / bc.width))
-  bwipjs.toCanvas(bc, { ...opts, scale })
   g.imageSmoothingEnabled = false
-  g.drawImage(bc, Math.round((600 - bc.width) / 2), 510, bc.width, 230)
+  if (s.symbology === 'qrcode') {
+    // Amazon-style labels carry a large 2D code; it survives distance and blur better than 1D bars.
+    const opts = { bcid: 'qrcode', text: s.barcode, backgroundcolor: 'FFFFFF', paddingwidth: 2, paddingheight: 2 }
+    bwipjs.toCanvas(bc, { ...opts, scale: 1 })
+    bwipjs.toCanvas(bc, { ...opts, scale: Math.max(1, Math.floor(250 / bc.width)) })
+    g.drawImage(bc, Math.round((600 - bc.width) / 2), 495, bc.width, bc.height)
+  } else {
+    const opts = { bcid: 'code128', text: s.barcode, height: 22, includetext: false, backgroundcolor: 'FFFFFF' }
+    bwipjs.toCanvas(bc, { ...opts, scale: 1 })
+    bwipjs.toCanvas(bc, { ...opts, scale: Math.max(1, Math.floor(560 / bc.width)) })
+    g.drawImage(bc, Math.round((600 - bc.width) / 2), 510, bc.width, 230)
+  }
 
   g.font = '700 26px "Courier New", monospace'
   const pretty = s.tracking.replace(/(.{4})/g, '$1 ').trim()

@@ -2,10 +2,21 @@
 // button_press webhook through the same pipeline a real Ring doorbell uses.
 import { useEffect, useRef, useState } from 'react'
 import { Button, Card, ScanBadge } from '../components/ui'
-import { api, fmtAddress, type SampleLabel, type Scan } from '../lib/api'
+import { api, fmtAddress, usePoll, type Package, type SampleLabel, type Scan } from '../lib/api'
 import { FRAME_H, FRAME_W, composeFrame, toJpeg } from '../lib/scene'
 
 type Source = 'label' | 'webcam' | 'upload'
+
+const norm = (t: string) => t.toUpperCase().replace(/[^0-9A-Z]/g, '')
+
+/** What pressing the bell with this label will do right now, given the homeowner's live package list. */
+function labelOutcome(l: SampleLabel, packages: Package[] | undefined): { text: string; cls: string } {
+  if (l.kind === 'wrong_house') return { text: 'Wrong house · box stays locked', cls: 'bg-bad/15 text-bad' }
+  const pkg = packages?.find((p) => norm(l.barcode).includes(norm(p.trackingNumber)))
+  if (!pkg) return { text: 'Not expected · box stays locked', cls: 'bg-warn/15 text-warn' }
+  if (pkg.status === 'expected') return { text: 'Expected · unlocks the box', cls: 'bg-accent/15 text-accent' }
+  return { text: 'Already delivered · reset to reuse', cls: 'bg-slate-500/20 text-slate-300' }
+}
 type Step = 'idle' | 'upload' | 'webhook' | 'processing' | 'done' | 'error'
 
 export default function Sim() {
@@ -20,6 +31,7 @@ export default function Sim() {
   const [scan, setScan] = useState<Scan | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [upload, setUpload] = useState<HTMLImageElement | null>(null)
+  const home = usePoll<{ packages: Package[] }>('/home', 3000)
   const preview = useRef<HTMLCanvasElement>(null)
   const video = useRef<HTMLVideoElement>(null)
 
@@ -72,7 +84,7 @@ export default function Sim() {
         const { scans } = await api<{ scans: Scan[] }>('/scans?limit=5')
         const s = scans.find((x) => x.scanId === r.scanId)
         if (s) setScan(s)
-        if (s && s.status !== 'processing') { setStep('done'); return }
+        if (s && s.status !== 'processing') { setStep('done'); home.reload(); return }
       }
       throw new Error('Timed out waiting for the result')
     } catch (e) {
@@ -102,8 +114,15 @@ export default function Sim() {
               className={`rounded-xl border p-3 text-left text-sm ${labelId === l.id ? 'border-accent bg-accent/10' : 'border-line bg-panel'}`}>
               <div className="font-semibold">{l.title}</div>
               <div className="text-xs text-mute">{l.to.join(', ')}</div>
+              {(() => { const o = labelOutcome(l, home.data?.packages); return <div className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${o.cls}`}>{o.text}</div> })()}
             </button>
           ))}
+        </div>
+      )}
+      {source === 'label' && (
+        <div className="flex items-center justify-between text-xs text-mute">
+          <span>Each expected package unlocks the box once, like a real delivery.</span>
+          <button className="underline hover:text-white" onClick={async () => { await api('/demo/reset', { method: 'POST' }); setScan(null); setStep('idle'); home.reload() }}>Reset demo</button>
         </div>
       )}
       {source === 'upload' && (

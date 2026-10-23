@@ -17,7 +17,8 @@ export function unlockPolicy(d: Decision, box: Box, now: number): PolicyResult {
   if (d.trackingSource !== 'barcode') return { allow: false, reason: 'Tracking number not confirmed by barcode' }
   if (d.addressCheck.result === 'mismatch') return { allow: false, reason: 'Address mismatch' }
   if (d.confidence < MIN_CONFIDENCE) return { allow: false, reason: `Confidence ${d.confidence.toFixed(2)} below ${MIN_CONFIDENCE}` }
-  if (box.state !== 'LOCKED' && box.state !== 'SECURED') return { allow: false, reason: `Box is ${box.state}` }
+  // UNLOCKED is fine too: a driver with several verified parcels restarts the window with a fresh token.
+  if (box.state === 'OPEN' || box.state === 'TAMPER') return { allow: false, reason: `Box is ${box.state}` }
   const recent = box.unlockHistory.filter((t) => now - t < 3_600_000)
   if (recent.length >= MAX_UNLOCKS_PER_HOUR) return { allow: false, reason: 'Unlock rate limit reached' }
   return { allow: true, reason: 'Verified expected package' }
@@ -35,7 +36,7 @@ export function transition(box: Box, ev: BoxEvent): Box {
   const next = { ...box, updatedAt: ev.now }
   switch (ev.type) {
     case 'unlock':
-      if (box.state !== 'LOCKED' && box.state !== 'SECURED') return box
+      if (box.state === 'OPEN' || box.state === 'TAMPER') return box
       return {
         ...next,
         state: 'UNLOCKED',

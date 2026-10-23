@@ -9,7 +9,7 @@ const DISTANCES = [0.95, 0.85, 0.75, 0.65, 0.55]
 const TILTS = [0, -10]
 const BLURS = [0, 1, 2]
 const CONCURRENCY = 4
-const EXPECTED: Record<string, Verdict> = { meds: 'right_address', shoes: 'right_address', surprise: 'right_address', neighbor: 'wrong_address' }
+const EXPECTED: Record<SampleLabel['kind'], Verdict> = { expected: 'right_address', unexpected: 'right_address', wrong_house: 'wrong_address' }
 
 export interface EvalRow {
   label: string; distance: number; cm: number; tilt: number; blur: number
@@ -31,7 +31,7 @@ async function runCase(label: SampleLabel, distance: number, tilt: number, blur:
     await new Promise((r) => setTimeout(r, 600))
     scan = (await api<{ scans: Scan[] }>('/scans?limit=40')).scans.find((s) => s.scanId === scanId)
   }
-  const expected = EXPECTED[label.id]
+  const expected = EXPECTED[label.kind]
   const actual: Verdict | 'error' = scan?.decision?.verdict ?? 'error'
   const outcome = actual === expected ? 'correct' : actual === 'unreadable' || actual === 'error' ? 'safe_fail' : 'wrong'
   return {
@@ -58,7 +58,7 @@ export default function Eval() {
       while (next < cases.length) {
         const [l, d, t, b] = cases[next++]
         const row = await runCase(l, d, t, b, deviceId).catch((e): EvalRow => ({
-          label: l.id, distance: d, cm: Math.round(7.6 / d), tilt: t, blur: b, expected: EXPECTED[l.id], actual: 'error', outcome: 'safe_fail',
+          label: l.id, distance: d, cm: Math.round(7.6 / d), tilt: t, blur: b, expected: EXPECTED[l.kind], actual: 'error', outcome: 'safe_fail',
           barcodeRead: false, addressRead: false, clientMs: 0, labelSource: String(e),
         }))
         out.push(row); setRows([...out])
@@ -83,7 +83,7 @@ export default function Eval() {
       <header>
         <div className="text-xs font-semibold uppercase tracking-widest text-accent">DeliveryHub eval</div>
         <h1 className="text-xl font-bold">Accuracy and latency on the live pipeline</h1>
-        <p className="text-sm text-mute">{DISTANCES.length * TILTS.length * BLURS.length * 4} signed doorbell presses: 4 labels × {DISTANCES.length} distances × {TILTS.length} tilts × {BLURS.length} blur levels. Resets the demo data when done.</p>
+        <p className="text-sm text-mute">{DISTANCES.length * TILTS.length * BLURS.length} signed doorbell presses per sample label ({DISTANCES.length} distances × {TILTS.length} tilts × {BLURS.length} blur levels). Resets the demo data when done.</p>
       </header>
       <Button onClick={run} disabled={running}>{running ? `Running… ${rows.length}/${total}` : 'Run eval'}</Button>
 

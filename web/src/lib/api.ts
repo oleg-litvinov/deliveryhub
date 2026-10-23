@@ -24,7 +24,10 @@ export interface Scan {
   instruction?: string; spokenText?: string; snapshotUrl?: string; audioUrl?: string
   box?: { allow: boolean; reason: string; state: BoxState }; latencyMs?: number; error?: string
 }
-export interface SampleLabel { id: string; title: string; tracking: string; barcode: string; carrier: string; to: string[] }
+export interface SampleLabel {
+  id: string; kind: 'expected' | 'wrong_house' | 'unexpected'; title: string; tracking: string; barcode: string
+  symbology: 'code128' | 'qrcode'; carrier: string; to: string[]
+}
 
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const res = await fetch(`/api${path}`, {

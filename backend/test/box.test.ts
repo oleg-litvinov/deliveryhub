@@ -18,8 +18,16 @@ describe('unlockPolicy (fails closed)', () => {
   ])('denies: %s', (_, patch) => {
     expect(unlockPolicy({ ...ok, ...patch }, newBox('h', t0), t0).allow).toBe(false)
   })
-  it('denies when the box is already open', () => {
+  it('denies when the box is already open or flagged for tamper', () => {
     expect(unlockPolicy(ok, { ...newBox('h', t0), state: 'OPEN' }, t0).allow).toBe(false)
+    expect(unlockPolicy(ok, { ...newBox('h', t0), state: 'TAMPER' }, t0).allow).toBe(false)
+  })
+  it('a second verified parcel while unlocked restarts the window with a new token', () => {
+    const first = transition(newBox('h', t0), { type: 'unlock', token: 'one', packageId: 'a', now: t0 })
+    expect(unlockPolicy(ok, first, t0 + 20_000).allow).toBe(true)
+    const second = transition(first, { type: 'unlock', token: 'two', packageId: 'b', now: t0 + 20_000 })
+    expect(second).toMatchObject({ state: 'UNLOCKED', token: 'two', packageId: 'b', tokenExpiresAt: t0 + 20_000 + 60_000 })
+    expect(transition(second, { type: 'lid_open', token: 'one', now: t0 + 21_000 }).state).toBe('TAMPER') // old token is dead
   })
   it('rate-limits unlocks', () => {
     const box = { ...newBox('h', t0), unlockHistory: Array(MAX_UNLOCKS_PER_HOUR).fill(t0 - 1000) }

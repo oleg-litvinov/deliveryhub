@@ -25,10 +25,14 @@ export function demoPackages(now: number): Package[] {
   ]
 }
 
-/** Sample labels for the Doorbell Simulator (rendered in the browser). */
+/**
+ * Sample labels for the Doorbell Simulator (rendered in the browser).
+ * kind = what the label is *meant* to demonstrate; the simulator also checks live package status.
+ */
 export const SAMPLE_LABELS = [
-  { id: 'meds', title: 'Medication (expected, USPS)', tracking: '9400111899223344556677', barcode: '420627049400111899223344556677', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
-  { id: 'shoes', title: 'Shoes (expected, UPS)', tracking: '1Z999AA10123456784', barcode: '1Z999AA10123456784', carrier: 'UPS', to: ['123 MAPLE STREET', 'SPRINGFIELD, IL 62704'] },
-  { id: 'neighbor', title: "Neighbor's package (wrong house)", tracking: '1Z999AA10198765432', barcode: '1Z999AA10198765432', carrier: 'UPS', to: ['42 OAK ST', 'SPRINGFIELD, IL 62704'] },
-  { id: 'surprise', title: 'Surprise gift (not expected)', tracking: '9400111899229988776655', barcode: '420627049400111899229988776655', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
-]
+  { id: 'meds', kind: 'expected', title: 'Medication (expected, USPS)', tracking: '9400111899223344556677', barcode: '420627049400111899223344556677', symbology: 'code128', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
+  { id: 'shoes', kind: 'expected', title: 'Running shoes (expected, UPS)', tracking: '1Z999AA10123456784', barcode: '1Z999AA10123456784', symbology: 'code128', carrier: 'UPS', to: ['123 MAPLE STREET', 'SPRINGFIELD, IL 62704'] },
+  { id: 'books', kind: 'expected', title: 'Kids books (expected, Amazon)', tracking: 'TBA304918275000', barcode: 'TBA304918275000', symbology: 'qrcode', carrier: 'Amazon', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
+  { id: 'neighbor', kind: 'wrong_house', title: "Neighbor's package (wrong house)", tracking: '1Z999AA10198765432', barcode: '1Z999AA10198765432', symbology: 'code128', carrier: 'UPS', to: ['42 OAK ST', 'SPRINGFIELD, IL 62704'] },
+  { id: 'surprise', kind: 'unexpected', title: 'Surprise gift (not expected)', tracking: '9400111899229988776655', barcode: '420627049400111899229988776655', symbology: 'code128', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
+] as const
