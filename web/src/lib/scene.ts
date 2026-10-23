@@ -150,3 +150,43 @@ export function composeFrame(source: { label?: SampleLabel; image?: CanvasImageS
 
 export const toJpeg = (c: HTMLCanvasElement, q = 0.85) =>
   new Promise<Blob>((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('encode failed'))), 'image/jpeg', q))
+
+/**
+ * Realistic sample: a doorbell-style photo (already wide-angle) of a driver holding the parcel.
+ * Generated photos can't contain a *real* barcode, so we draw a scannable one over the label's barcode area,
+ * encoding the same tracking number printed under it, and cover the photo's fake camera timestamp.
+ */
+export function composePhotoFrame(photo: HTMLImageElement, label: SampleLabel, o: { deviceId: string; timestamp: number }): HTMLCanvasElement {
+  const c = document.createElement('canvas')
+  c.width = FRAME_W
+  c.height = FRAME_H
+  const g = c.getContext('2d')!
+  const k = Math.max(FRAME_W / photo.naturalWidth, FRAME_H / photo.naturalHeight)
+  const dx = (FRAME_W - photo.naturalWidth * k) / 2
+  const dy = (FRAME_H - photo.naturalHeight * k) / 2
+  g.drawImage(photo, dx, dy, photo.naturalWidth * k, photo.naturalHeight * k)
+
+  if (label.photoBarcodeBox) {
+    const [bx, by, bw, bh] = label.photoBarcodeBox
+    const x = dx + bx * k, y = dy + by * k, w = bw * k, h = bh * k
+    // Match the label's paper colour (sampled just above the barcode area) so the patch blends in.
+    const px = g.getImageData(Math.round(x + w / 2 - 15), Math.round(y - 14), 30, 8).data
+    const avg = [0, 1, 2].map((ch) => { let t = 0; for (let i = ch; i < px.length; i += 4) t += px[i]; return Math.round(t / (px.length / 4)) })
+    const paper = avg.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()
+    g.fillStyle = `#${paper}`
+    g.fillRect(x, y, w, h)
+    const bc = document.createElement('canvas')
+    const opts = { bcid: label.symbology === 'qrcode' ? 'qrcode' : 'code128', text: label.barcode, height: 12, includetext: false, backgroundcolor: paper }
+    bwipjs.toCanvas(bc, { ...opts, scale: 1 })
+    const scale = Math.max(1, Math.floor(Math.min((w * 0.94) / bc.width, label.symbology === 'qrcode' ? (h * 0.94) / bc.height : Infinity)))
+    bwipjs.toCanvas(bc, { ...opts, scale })
+    g.imageSmoothingEnabled = false
+    const bh2 = label.symbology === 'qrcode' ? bc.height : h * 0.86
+    g.drawImage(bc, Math.round(x + (w - bc.width) / 2), Math.round(y + (h - bh2) / 2), bc.width, bh2)
+  }
+  // Cover the generated image's own camera timestamp, then add ours.
+  g.fillStyle = 'rgba(0,0,0,.55)'
+  g.fillRect(FRAME_W - 760, 14, 746, 52)
+  watermark(g, o.deviceId, o.timestamp)
+  return c
+}

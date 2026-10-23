@@ -19,7 +19,7 @@ export function demoPackages(now: number): Package[] {
     packageId, homeId: DEMO_HOME_ID, trackingNumber, nickname, carrier, sender, instruction, status: 'expected', createdAt: now,
   })
   return [
-    p('meds', '9400111899223344556677', "Mom's medication", 'USPS', 'CVS Pharmacy', 'This is medication. Please put it in the cooler box by the door.'),
+    p('meds', '9400111899567890123456', "Mom's medication", 'USPS', 'CVS Pharmacy', 'This is medication. Please put it in the cooler box by the door.'),
     p('shoes', '1Z999AA10123456784', 'Running shoes', 'UPS', 'Zappos'),
     p('books', 'TBA304918275000', 'Kids books', 'Amazon', 'Amazon', 'These are books. Please keep them dry.'),
   ]
@@ -30,7 +30,9 @@ export function demoPackages(now: number): Package[] {
  * kind = what the label is *meant* to demonstrate; the simulator also checks live package status.
  */
 export const SAMPLE_LABELS = [
-  { id: 'meds', kind: 'expected', title: 'Medication (expected, USPS)', tracking: '9400111899223344556677', barcode: '420627049400111899223344556677', symbology: 'code128', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
+  // Photo sample: a real doorbell-style photo; the simulator draws a real, scannable barcode over the label's
+  // barcode area (photoBarcodeBox, in photo pixels) encoding the same number printed under it.
+  { id: 'meds', kind: 'expected', title: 'Medication (expected, USPS)', tracking: '9400111899567890123456', barcode: '420627049400111899567890123456', symbology: 'code128', carrier: 'USPS', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'], photo: '/samples/meds-driver.jpg', photoBarcodeBox: [470, 527, 375, 98] },
   { id: 'shoes', kind: 'expected', title: 'Running shoes (expected, UPS)', tracking: '1Z999AA10123456784', barcode: '1Z999AA10123456784', symbology: 'code128', carrier: 'UPS', to: ['123 MAPLE STREET', 'SPRINGFIELD, IL 62704'] },
   { id: 'books', kind: 'expected', title: 'Kids books (expected, Amazon)', tracking: 'TBA304918275000', barcode: 'TBA304918275000', symbology: 'qrcode', carrier: 'Amazon', to: ['123 MAPLE ST', 'SPRINGFIELD IL 62704'] },
   { id: 'neighbor', kind: 'wrong_house', title: "Neighbor's package (wrong house)", tracking: '1Z999AA10198765432', barcode: '1Z999AA10198765432', symbology: 'code128', carrier: 'UPS', to: ['42 OAK ST', 'SPRINGFIELD, IL 62704'] },

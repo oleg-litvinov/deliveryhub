@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Card, ScanBadge } from '../components/ui'
 import { api, fmtAddress, usePoll, type Package, type SampleLabel, type Scan } from '../lib/api'
-import { FRAME_H, FRAME_W, composeFrame, toJpeg } from '../lib/scene'
+import { FRAME_H, FRAME_W, composeFrame, composePhotoFrame, toJpeg } from '../lib/scene'
 
 type Source = 'label' | 'webcam' | 'upload'
 
@@ -32,10 +32,22 @@ export default function Sim() {
   const [error, setError] = useState<string | null>(null)
   const [upload, setUpload] = useState<HTMLImageElement | null>(null)
   const home = usePoll<{ packages: Package[] }>('/home', 3000)
+  const [photos, setPhotos] = useState<Record<string, HTMLImageElement>>({})
   const preview = useRef<HTMLCanvasElement>(null)
   const video = useRef<HTMLVideoElement>(null)
 
   useEffect(() => { api<{ labels: SampleLabel[]; deviceId: string }>('/sim/labels').then((r) => { setLabels(r.labels); setDeviceId(r.deviceId) }).catch((e) => setError(e.message)) }, [])
+
+  // Preload realistic sample photos.
+  useEffect(() => {
+    labels.filter((l) => l.photo).forEach((l) => {
+      const img = new Image()
+      img.onload = () => setPhotos((p) => ({ ...p, [l.id]: img }))
+      img.src = l.photo!
+    })
+  }, [labels])
+  const selected = labels.find((l) => l.id === labelId)
+  const photoMode = source === 'label' && !!selected?.photo && !!photos[labelId]
 
   useEffect(() => {
     if (source !== 'webcam') return
@@ -48,6 +60,7 @@ export default function Sim() {
 
   const frame = (timestamp: number) => {
     const label = labels.find((l) => l.id === labelId)
+    if (source === 'label' && label?.photo && photos[label.id]) return composePhotoFrame(photos[label.id], label, { deviceId, timestamp })
     if (source === 'label') return label ? composeFrame({ label }, { distance, tilt, blur, deviceId, timestamp }) : null
     if (source === 'webcam' && video.current?.videoWidth) {
       const v = video.current
@@ -64,7 +77,7 @@ export default function Sim() {
     const p = preview.current
     if (!c || !p) return
     p.getContext('2d')!.drawImage(c, 0, 0, p.width, p.height)
-  }, [labels, labelId, distance, tilt, blur, source, upload]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [labels, labelId, distance, tilt, blur, source, upload, photos]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const press = async () => {
     setError(null); setScan(null)
@@ -112,6 +125,7 @@ export default function Sim() {
           {labels.map((l) => (
             <button key={l.id} onClick={() => setLabelId(l.id)}
               className={`rounded-xl border p-3 text-left text-sm ${labelId === l.id ? 'border-accent bg-accent/10' : 'border-line bg-panel'}`}>
+              {l.photo && <img src={l.photo} alt="" className="mb-2 aspect-video w-full rounded-lg object-cover" />}
               <div className="font-semibold">{l.title}</div>
               <div className="text-xs text-mute">{l.to.join(', ')}</div>
               {(() => { const o = labelOutcome(l, home.data?.packages); return <div className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${o.cls}`}>{o.text}</div> })()}
@@ -138,7 +152,8 @@ export default function Sim() {
           : <canvas ref={preview} width={FRAME_W / 3} height={FRAME_H / 3} className="aspect-video w-full" />}
       </div>
 
-      {source === 'label' && (
+      {photoMode && <p className="text-xs text-mute">Photo sample: a real-looking doorbell frame. The label's barcode is drawn as a real, scannable code with the tracking number printed under it.</p>}
+      {source === 'label' && !photoMode && (
         <Card className="grid gap-3 text-sm">
           <Slider label="Label distance from the lens" value={distance} min={0.45} max={0.95} step={0.05} onChange={setDistance} display={`≈ ${Math.round(7.6 / distance)} cm`} />
           <Slider label="Tilt" value={tilt} min={-20} max={20} step={1} onChange={setTilt} unit="°" />

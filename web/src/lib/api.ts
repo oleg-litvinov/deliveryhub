@@ -27,6 +27,8 @@ export interface Scan {
 export interface SampleLabel {
   id: string; kind: 'expected' | 'wrong_house' | 'unexpected'; title: string; tracking: string; barcode: string
   symbology: 'code128' | 'qrcode'; carrier: string; to: string[]
+  photo?: string // realistic doorbell photo of this delivery
+  photoBarcodeBox?: [number, number, number, number] // x, y, w, h of the label's barcode area in photo pixels
 }
 
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
