@@ -14,7 +14,7 @@ Ring can tell you that *a* package is on your porch. It can't tell you *which* o
 ## What it does
 
 1. **The homeowner** adds the packages they expect, each with a nickname and an optional instruction for the driver ("Medication, please put it in the cooler box").
-2. **The driver** holds the label up to the Ring doorbell and presses the bell. No app, no account.
+2. **The driver** just holds the label up to the Ring doorbell. **Hands-free:** Ring's package-delivery motion event starts the check, so there's no button to press with a parcel in both hands. No app, no account. (Pressing the bell works too.)
 3. **DeliveryHub** reads the barcode and the ship-to address from the doorbell frame, then checks them against the home and the expected list:
    - ✅ **Right house:** the driver hears the homeowner's instruction for *that* package, and the homeowner's app marks it **Delivered** with the doorbell photo as proof.
    - ❌ **Wrong house:** "Wait, this package is for 42 Oak St." The homeowner gets an alert.
@@ -34,7 +34,7 @@ Every decision is explainable: the app shows the address read from the label nex
 
 - **Ring Partner API**, built to the spec we pulled through the **Ring Appstore Knowledge MCP server**:
   - `button_press` and `motion_detected` (`package_delivery`) webhooks with HMAC-SHA256 `X-Signature` verification and `meta.request_id` dedupe;
-  - `media/image/download` (`at_timestamp`) for three frames around the press (−1.5 s, 0, +2.5 s), de-duplicated by `X-Media-Timestamp`, with backoff and jitter on `425`/`416` while the recording catches up;
+  - `media/image/download` (`at_timestamp`): on a motion event, a frame every ~1.5 s for up to 10 s, stopping at the first barcode; on a bell press, three frames around it. Frames are de-duplicated by `X-Media-Timestamp`, with backoff and jitter on `425`/`416` while the recording catches up. A look where nobody shows a label stays silent and keeps nothing;
   - **one-way account linking:** Token Exchange URL (code → tokens within 60 s), an Account Link page with the required sign-in and a consent disclosure, nonce = base64url(HMAC-SHA256(key, `time:account`)) checked in constant time within 600 s, then `POST` + `PATCH /v1/accounts/me/app-integrations`;
   - OAuth refresh with token rotation; `app_integration_removed` deletes the tokens.
 - **Webhook Lambda:** verifies the signature, dedupes on `meta.request_id`, records a "Reading label…" scan and async-invokes the worker. ACKs in under a second (Ring requires 5 s).
@@ -75,7 +75,7 @@ Other friction: there's no doorbell-speaker API (we built the Door Display), no 
 
 - **Zero false confirmations:** a neighbor's package has never been confirmed as ours in any eval run.
 - Works for every carrier, because it reads the label itself.
-- Responsible by design: the press is the consent; no names, no faces; 30-day photo retention enforced by S3; explainable decisions; fails closed.
+- Responsible by design: it only acts when a driver *shows* a label, and frames without one are discarded; no names, no faces; 30-day photo retention enforced by S3; explainable decisions; fails closed.
 
 ## What we learned
 
@@ -95,6 +95,6 @@ Other friction: there's no doorbell-speaker API (we built the Door Display), no 
 | Criterion | Evidence |
 |---|---|
 | **Tech Implementation** | Ring webhooks with HMAC verification and idempotency, snapshots with retries and dedupe, OAuth refresh, and full one-way account linking. A 9-service serverless AWS pipeline in one SAM template. 49 unit tests. A live 120-case eval with p50/p90 latency. |
-| **Design** | Zero new behaviour for the driver (show the label, press the bell). A Door Display readable at arm's length. A homeowner feed with photo proof and a "why" behind every decision. A three-pane demo console for judges. |
+| **Design** | Zero new behaviour for the driver: hold the label up, hands-free. A Door Display readable at arm's length. A homeowner feed with photo proof and a "why" behind every decision. A three-pane demo console for judges. |
 | **Potential Impact** | Targets Ring's *package/delivery management* priority. Works for every carrier. A path to the Ring Appstore, plus a hardware accessory (Delivery Box) and business/front-desk mode. |
 | **Quality of the Idea** | Turns the doorbell camera into a *consented* helper for the person at the door rather than a surveillance tool: Ring knows *a* package is there; DeliveryHub knows *which* and *whether it belongs here*. |

@@ -6,7 +6,7 @@
 
 A weatherproof, lockable box sits next to the front door, in view of the Ring doorbell. It opens **only** when DeliveryHub has verified that the package belongs to this home:
 
-1. The driver holds the label up to the doorbell and presses the bell.
+1. The driver holds the label up to the doorbell (hands-free: Ring's package-motion event starts the check).
 2. DeliveryHub reads the barcode and the address, and finds the package on the homeowner's expected list.
 3. The box unlocks for 60 seconds. The Door Display and the voice prompt tell the driver it's open.
 4. The driver drops the package in and closes the lid. The box relocks.

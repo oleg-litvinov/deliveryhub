@@ -1,7 +1,7 @@
 # DeliveryHub for Ring
 
 
-**The driver holds the label up to the Ring doorbell and presses the bell. DeliveryHub confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
+**The driver just holds the label up to the Ring doorbell, hands-free, no button. DeliveryHub confirms it's the right house, marks the package delivered with photo proof, and tells the driver the homeowner's instructions for that package.**
 
 Ring already knows *a* package is at the door. DeliveryHub knows *which* package it is and *whether it belongs here*.
 
@@ -12,7 +12,7 @@ Ring already knows *a* package is at the door. DeliveryHub knows *which* package
 ## Try it in 60 seconds
 
 1. Open **https://dgnb2hmunowzj.cloudfront.net** on a laptop. No login.
-2. In the left pane (**Doorbell Simulator**), keep "Medication" selected and press **🔔 Press the doorbell**.
+2. In the left pane (**Doorbell Simulator**), keep "Medication" (the photo sample) selected and click **📦 Driver holds the label up (hands-free)**.
 3. Watch the middle pane (**Door Display**) confirm the right house and show the homeowner's instruction (tap "enable voice" to hear it), then **Lift lid** / **Close lid** on the Delivery Box.
 4. Watch the right pane (**homeowner app**): delivered, with photo proof and the reason.
 5. Try **Neighbor's package**: wrong house, alert, box stays locked. **Settings → Reset demo data** starts over.
@@ -26,7 +26,7 @@ Ring already knows *a* package is at the door. DeliveryHub knows *which* package
 ![Architecture](docs/architecture.svg)
 
 ```
-Ring doorbell ─ button_press webhook (HMAC-signed) ─► API Gateway → webhook Lambda ── verify, dedupe, ACK < 1 s
+Ring doorbell ─ package-motion / button_press webhook (HMAC-signed) ─► API Gateway → webhook Lambda ── verify, dedupe, ACK < 1 s
  (or Doorbell Simulator: identical signed payload)                     │ async
                                                                        ▼
                                                        scan-worker Lambda
@@ -72,7 +72,7 @@ Then paste `RingWebhookUrl`, `RingAccountLinkUrl` and `RingTokenExchangeUrl` int
 
 ## Privacy
 
-- The scan starts when the driver presses the bell while showing the label (an explicit action). No face recognition.
+- DeliveryHub only acts when a label is shown to the doorbell (Ring's package/person motion event, or a bell press). Frames without a label are discarded and never stored. No face recognition.
 - Only the ship-to address and tracking number are extracted; the recipient name is never requested or stored.
 - Snapshots are deleted automatically after 30 days (S3 lifecycle rule).
 - Every decision shows the address read next to the home address, with the reason.
